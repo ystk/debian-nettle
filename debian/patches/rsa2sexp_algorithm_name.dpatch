@@ -1,0 +1,42 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## rsa2sexp_algorithm_name.dpatch by Magnus Holmgren <holmgren@debian.org>
+##
+## DP: Use a default algorithm name that LSH understands.
+
+@DPATCH@
+diff -urNad trunk~/rsa2sexp.c trunk/rsa2sexp.c
+--- trunk~/rsa2sexp.c	2009-06-08 20:27:10.000000000 +0200
++++ trunk/rsa2sexp.c	2009-10-11 23:11:28.000000000 +0200
+@@ -37,7 +37,7 @@
+ 		    const struct rsa_private_key *priv)
+ {
+   if (!algorithm_name)
+-    algorithm_name = "rsa";
++    algorithm_name = "rsa-pkcs1";
+   
+   if (priv)
+     return sexp_format(buffer,
+diff -urNad trunk~/testsuite/rsa2sexp-test.c trunk/testsuite/rsa2sexp-test.c
+--- trunk~/testsuite/rsa2sexp-test.c	2009-06-08 20:27:12.000000000 +0200
++++ trunk/testsuite/rsa2sexp-test.c	2009-10-11 23:11:56.000000000 +0200
+@@ -92,13 +92,13 @@
+       print_hex(buffer.size, buffer.contents);  
+     }
+   ASSERT(MEMEQH(buffer.size, buffer.contents,
+-		"2831303a7075626c69632d6b65792833"
+-		"3a72736128313a6e36333a085c340898"
+-		"9acae4faec3cbbad91c90d34c1d259cd"
+-		"74121a36f38b0b51424a9b2be514a043"
+-		"77113a6cdafe79dd7d5f2ecc8b5e9661"
+-		"189b86a7b22239907c252928313a6534"
+-		"3a36ad4b1d292929"));
++		"2831303a7075626c69632d6b65792839"
++		"3a7273612d706b63733128313a6e3633"
++		"3a085c3408989acae4faec3cbbad91c9"
++		"0d34c1d259cd74121a36f38b0b51424a"
++		"9b2be514a04377113a6cdafe79dd7d5f"
++		"2ecc8b5e9661189b86a7b22239907c25"
++		"2928313a65343a36ad4b1d292929"));
+ 
+   rsa_public_key_clear(&pub);
+   rsa_private_key_clear(&priv);

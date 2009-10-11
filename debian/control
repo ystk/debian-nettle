@@ -1,0 +1,104 @@
+Source: nettle
+Section: libs
+Priority: optional
+Maintainer: Magnus Holmgren <holmgren@debian.org>
+Build-Depends: debhelper (>= 5), libgmp3-dev, m4, autotools-dev, dpatch
+Standards-Version: 3.8.3
+Vcs-Svn: svn://svn.kibibyte.se/nettle/trunk
+Vcs-Browser: http://svn.kibibyte.se/nettle
+Homepage: http://www.lysator.liu.se/~nisse/nettle/
+
+Package: libnettle3
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: low level cryptographic library (symmetric and one-way cryptos)
+ Nettle is a cryptographic library that is designed to fit easily in more or
+ less any context: In crypto toolkits for object-oriented languages (C++,
+ Python, Pike, ...), in applications like LSH or GNUPG, or even in kernel
+ space.
+ .
+ It tries to solve a problem of providing a common set of cryptographic 
+ algorithms for higher-level applications by implementing a
+ context-independent set of cryptographic algorithms. In that light, Nettle
+ doesn't do any memory allocation or I/O, it simply provides the
+ cryptographic algorithms for the application to use in any environment and
+ in any way it needs.
+
+Package: libhogweed1
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: low level cryptographic library (public-key cryptos)
+ Nettle is a cryptographic library that is designed to fit easily in more or
+ less any context: In crypto toolkits for object-oriented languages (C++,
+ Python, Pike, ...), in applications like LSH or GNUPG, or even in kernel
+ space.
+ .
+ It tries to solve a problem of providing a common set of cryptographic 
+ algorithms for higher-level applications by implementing a
+ context-independent set of cryptographic algorithms. In that light, Nettle
+ doesn't do any memory allocation or I/O, it simply provides the
+ cryptographic algorithms for the application to use in any environment and
+ in any way it needs.
+
+Package: nettle-dev
+Section: libdevel
+Architecture: any
+Depends: libnettle3 (= ${binary:Version}), libhogweed1 (= ${binary:Version}),
+         libgmp3-dev, dpkg (>= 1.15.4) | install-info, ${misc:Depends}
+Replaces: libnettle-dev
+Conflicts: libnettle-dev
+Description: low level cryptographic library (development files)
+ Nettle is a cryptographic library that is designed to fit easily in more or
+ less any context: In crypto toolkits for object-oriented languages (C++,
+ Python, Pike, ...), in applications like LSH or GNUPG, or even in kernel
+ space.
+ .
+ It tries to solve a problem of providing a common set of cryptographic 
+ algorithms for higher-level applications by implementing a
+ context-independent set of cryptographic algorithms. In that light, Nettle
+ doesn't do any memory allocation or I/O, it simply provides the
+ cryptographic algorithms for the application to use in any environment and
+ in any way it needs.
+ .
+ This package contains the development files (C headers and static libraries)
+
+Package: nettle-bin
+Section: misc
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Conflicts: libnettle1, lsh-utils (<< 2.0.4-dfsg-1)
+Suggests: lsh-utils-doc | lsh-doc
+Description: low level cryptographic library (binary tools)
+ Nettle is a cryptographic library that is designed to fit easily in more or
+ less any context: In crypto toolkits for object-oriented languages (C++,
+ Python, Pike, ...), in applications like LSH or GNUPG, or even in kernel
+ space.
+ .
+ It tries to solve a problem of providing a common set of cryptographic 
+ algorithms for higher-level applications by implementing a
+ context-independent set of cryptographic algorithms. In that light, Nettle
+ doesn't do any memory allocation or I/O, it simply provides the
+ cryptographic algorithms for the application to use in any environment and
+ in any way it needs.
+ .
+ This package contains binary utilities that accompany the library:
+ .
+    - nettle-lfib-stream - generates a pseudorandom stream, using the Knuth 
+      lfib (non-cryptographic) pseudorandom generator.
+    - sexp-conv - conversion tool for handling the different flavours of sexp
+      syntax.
+    - pkcs1-conv - converts PKCS#1 keys to sexp format.
+
+Package: nettle-dbg
+Section: debug
+Priority: extra
+Architecture: any
+Depends: libnettle3 (= ${binary:Version}) | libhogweed1 (= ${binary:Version}) | nettle-bin (= ${binary:Version}), ${misc:Depends}
+Description: low level cryptographic library (debugging symbols)
+ Nettle is a cryptographic library that is designed to fit easily in more or
+ less any context: In crypto toolkits for object-oriented languages (C++,
+ Python, Pike, ...), in applications like LSH or GNUPG, or even in kernel
+ space.
+ .
+ This package contains the debugging symbols for all binary packages.

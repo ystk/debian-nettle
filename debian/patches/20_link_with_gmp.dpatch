@@ -1,0 +1,18 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 20_link_with_gmp.dpatch by  <magnus@kibibyte.se>
+##
+## DP: Link libhogweed.so.1 with -lgmp
+
+@DPATCH@
+diff -urNad nettle-1.15~/config.make.in nettle-1.15/config.make.in
+--- nettle-1.15~/config.make.in	2006-11-28 16:30:24.000000000 +0100
++++ nettle-1.15/config.make.in	2007-05-15 12:53:54.000000000 +0200
+@@ -39,7 +39,7 @@
+ LIBHOGWEED_SONAME = @LIBHOGWEED_SONAME@
+ LIBHOGWEED_FILE = @LIBHOGWEED_FILE@
+ LIBHOGWEED_FORLINK = @LIBHOGWEED_FORLINK@
+-LIBHOGWEED_LIBS = @LIBHOGWEED_LIBS@
++LIBHOGWEED_LIBS = @LIBHOGWEED_LIBS@ -lgmp -L. -lnettle
+ LIBHOGWEED_LINK = @LIBHOGWEED_LINK@
+ 
+ AR = ar
