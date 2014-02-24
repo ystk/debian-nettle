@@ -124,7 +124,7 @@ vector_clear_bits (unsigned long *vector, unsigned long step,
 static unsigned
 find_first_one (unsigned long x)
 {  
-  unsigned table[0x101] =
+  static const unsigned char table[0x101] =
     {
      15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -145,10 +145,11 @@ find_first_one (unsigned long x)
       7,
     };
 
+  unsigned i = 0;
+
   /* Isolate least significant bit */
   x &= -x;
 
-  unsigned i = 0;
 #if NEED_HANDLE_LARGE_LONG
 #ifndef SIZEOF_LONG
   /* Can not be tested by the preprocessor. May generate warnings
@@ -243,12 +244,23 @@ main (int argc, char **argv)
   int verbose = 0;
   int c;
 
-  while ( (c = getopt(argc, argv, "?svb:")) != -1)
+  enum { OPT_HELP = 300 };
+  static const struct option options[] =
+    {
+      /* Name, args, flag, val */
+      { "help", no_argument, NULL, OPT_HELP },
+      { "verbose", no_argument, NULL, 'v' },
+      { "block-size", required_argument, NULL, 'b' },
+      { "quiet", required_argument, NULL, 'q' },
+      { NULL, 0, NULL, 0}
+    };
+
+  while ( (c = getopt_long(argc, argv, "svb:", options, NULL)) != -1)
     switch (c)
       {
-      case '?':
+      case OPT_HELP:
 	usage();
-	return EXIT_FAILURE;
+	return EXIT_SUCCESS;
       case 'b':
 	block_nbits = CHAR_BIT * atosize(optarg);
 	if (!block_nbits)
@@ -258,13 +270,16 @@ main (int argc, char **argv)
 	  }
 	break;
 
-      case 's':
+      case 'q':
 	silent = 1;
 	break;
 
       case 'v':
 	verbose++;
 	break;
+
+      case '?':
+	return EXIT_FAILURE;
 
       default:
 	abort();

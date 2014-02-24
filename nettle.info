@@ -1,15 +1,15 @@
-This is nettle.info, produced by makeinfo version 4.6 from
+This is nettle.info, produced by makeinfo version 4.13 from
 nettle.texinfo.
 
-This manual is for the Nettle library (version 2.0), a low-level
+This manual is for the Nettle library (version 2.3), a low-level
 cryptographic library.
 
-   Originally written 2001 by Niels Möller, updated 2009.
+   Originally written 2001 by Niels Möller, updated 2011.
 
      This manual is placed in the public domain. You may freely copy
      it, in whole or in part, with or without modification. Attribution
      is appreciated, but not required.
-   
+
 INFO-DIR-SECTION Encryption
 START-INFO-DIR-ENTRY
 * Nettle: (nettle).             A low-level cryptographic library.
@@ -25,32 +25,56 @@ This document describes the Nettle low-level cryptographic library. You
 can use the library directly from your C programs, or write or use an
 object-oriented wrapper for your favorite language or application.
 
-This manual is for the Nettle library (version 2.0), a low-level
+   This manual is for the Nettle library (version 2.3), a low-level
 cryptographic library.
 
-   Originally written 2001 by Niels Möller, updated 2009.
+   Originally written 2001 by Niels Möller, updated 2011.
 
      This manual is placed in the public domain. You may freely copy
      it, in whole or in part, with or without modification. Attribution
      is appreciated, but not required.
-   
+
 * Menu:
 
 * Introduction::                What is Nettle?
 * Copyright::                   Your rights.
 * Conventions::                 General interface conventions.
 * Example::                     An example program.
-* Linking::
+* Linking::                     Linking with the libnettle and libhogweed.
 * Reference::                   All Nettle functions and features.
 * Nettle soup::                 For the serious nettle hacker.
 * Installation::                How to install Nettle.
 * Index::                       Function and concept index.
 
+ --- The Detailed Node Listing ---
+
+Reference
+
+* Hash functions::
+* Cipher functions::
+* Cipher modes::
+* Keyed hash functions::
+* Public-key algorithms::
+* Randomness::
+* Miscellaneous functions::
+* Compatibility functions::
+
+Cipher modes
+
+* CBC::
+* CTR::
+* GCM::
+
+Public-key algorithms
+
+* RSA::                         The RSA public key algorithm.
+* DSA::                         The DSA digital signature algorithm.
+
 
 File: nettle.info,  Node: Introduction,  Next: Copyright,  Prev: Top,  Up: Top
 
-Introduction
-************
+1 Introduction
+**************
 
 Nettle is a cryptographic library that is designed to fit easily in more
 or less any context: In crypto toolkits for object-oriented languages
@@ -84,17 +108,13 @@ put it to use.
 
 File: nettle.info,  Node: Copyright,  Next: Conventions,  Prev: Introduction,  Up: Top
 
-Copyright
-*********
+2 Copyright
+***********
 
-Nettle is distributed under the GNU General Public License (GPL) (see
-the file COPYING for details). However, most of the individual files
-are dual licensed under less restrictive licenses like the GNU Lesser
-General Public License (LGPL), or are in the public domain. This means
-that if you don't use the parts of nettle that are GPL-only, you have
-the option to use the Nettle library just as if it were licensed under
-the LGPL. To find the current status of particular files, you have to
-read the copyright notices at the top of the files.
+Nettle is distributed under the GNU Lesser General Public License
+(LGPL), see the file COPYING.LIB for details. A few of the individual
+files are in the public domain. To find the current status of particular
+files, you have to read the copyright notices at the top of the files.
 
    This manual is in the public domain. You may freely copy it in whole
 or in part, e.g., into documentation of programs that build on Nettle.
@@ -121,7 +141,12 @@ _ARCTWO_
 _BLOWFISH_
      The implementation of the BLOWFISH cipher is written by Werner
      Koch, copyright owned by the Free Software Foundation. Also hacked
-     by Ray Dassen and Niels Möller. Released under the GPL.
+     by Simon Josefsson and Niels Möller. Released under the LGPL.
+
+_CAMELLIA_
+     The C implementation is by Nippon Telegraph and Telephone
+     Corporation (NTT), heavily modified by Niels Möller. Assembler for
+     x86 and x86_64 by Niels Möller. Released under the LGPL.
 
 _CAST128_
      The implementation of the CAST128 cipher is written by Steve Reid.
@@ -145,10 +170,18 @@ _MD5_
      Plumb.  It has been hacked some more by Andrew Kuchling and Niels
      Möller.  Released into the public domain.
 
+_RIPMED160_
+     The implementation of RIPEMD160 message digest is based on the
+     code in libgcrypt, copyright owned by the Free Software
+     Foundation. Ported to Nettle by Andres Mejia. Released under the
+     LGPL.
+
 _SERPENT_
-     The implementation of the SERPENT cipher is written by Ross
-     Anderson, Eli Biham, and Lars Knudsen, adapted to LSH by Rafael
-     Sevilla, and to Nettle by Niels Möller. Released under the GPL.
+     The implementation of the SERPENT cipher is based on the code in
+     libgcrypt, copyright owned by the Free Software Foundation.
+     Adapted to Nettle by Simon Josefsson and heavily modified by Niels
+     Möller. Assembly for x86_64 by Niels Möller. Released under the
+     LGPL.
 
 _SHA1_
      The C implementation of the SHA1 message digest is written by Peter
@@ -156,7 +189,7 @@ _SHA1_
      Released into the public domain. Assembler for x86 by Niels Möller,
      released under the LGPL.
 
-_SHA256_
+_SHA224, SHA256, SHA384, and SHA512_
      Written by Niels Möller, using Peter Gutmann's SHA1 code as a
      model.  Released under the LGPL.
 
@@ -175,8 +208,8 @@ _DSA_
 
 File: nettle.info,  Node: Conventions,  Next: Example,  Prev: Copyright,  Up: Top
 
-Conventions
-***********
+3 Conventions
+*************
 
 For each supported algorithm, there is an include file that defines a
 _context struct_, a few constants, and declares functions for operating
@@ -193,9 +226,9 @@ nevertheless be aware of. There is no big difference between the
 functions for stream ciphers and for block ciphers, although they should
 be used quite differently by the application.
 
-   If your application uses more than one algorithm, you should probably
-create an interface that is tailor-made for your needs, and then write a
-few lines of glue code on top of Nettle.
+   If your application uses more than one algorithm of the same type,
+you should probably create an interface that is tailor-made for your
+needs, and then write a few lines of glue code on top of Nettle.
 
    By convention, for an algorithm named `foo', the struct tag for the
 context struct is `foo_ctx', constants and functions uses prefixes like
@@ -209,11 +242,14 @@ destination areas are of the same length. Source and destination may be
 the same, so that you can process strings in place, but they _must not_
 overlap in any other way.
 
+   Many of the functions lack return value and can never fail. Those
+functions which can fail, return one on success and zero on failure.
+
 
 File: nettle.info,  Node: Example,  Next: Linking,  Prev: Conventions,  Up: Top
 
-Example
-*******
+4 Example
+*********
 
 A simple example program that reads a file from standard input and
 writes its SHA1 checksum on standard output should give the flavor of
@@ -221,29 +257,29 @@ Nettle.
 
      #include <stdio.h>
      #include <stdlib.h>
-     
+
      #include <nettle/sha.h>
-     
+
      #define BUF_SIZE 1000
-     
+
      static void
      display_hex(unsigned length, uint8_t *data)
      {
        unsigned i;
-     
+
        for (i = 0; i<length; i++)
          printf("%02x ", data[i]);
-     
+
        printf("\n");
      }
-     
+
      int
      main(int argc, char **argv)
      {
        struct sha1_ctx ctx;
        uint8_t buffer[BUF_SIZE];
        uint8_t digest[SHA1_DIGEST_SIZE];
-       
+
        sha1_init(&ctx);
        for (;;)
        {
@@ -254,11 +290,11 @@ Nettle.
        }
        if (ferror(stdin))
          return EXIT_FAILURE;
-     
+
        sha1_digest(&ctx, SHA1_DIGEST_SIZE, digest);
-     
+
        display_hex(SHA1_DIGEST_SIZE, digest);
-       return EXIT_SUCCESS;  
+       return EXIT_SUCCESS;
      }
 
    On a typical Unix system, this program can be compiled and linked
@@ -268,8 +304,8 @@ with the command line
 
 File: nettle.info,  Node: Linking,  Next: Reference,  Prev: Example,  Up: Top
 
-Linking
-*******
+5 Linking
+*********
 
 Nettle actually consists of two libraries, `libnettle' and
 `libhogweed'. The `libhogweed' library contains those functions of
@@ -277,17 +313,19 @@ Nettle that uses bignum operations, and depends on the GMP library.
 With this division, linking works the same for both static and dynamic
 libraries.
 
-   If an application uses only the symmetric crypto algorithms of
-Nettle (i.e., block ciphers, hash functions, and the like), it's
-sufficient to link with `-lnettle'. If an application also uses
-public-key algorithms, it must be linked with `-lhogweed -lnettle
--lgmp'.
+   If an application uses only the symmetric crypto algorithms of Nettle
+(i.e., block ciphers, hash functions, and the like), it's sufficient to
+link with `-lnettle'. If an application also uses public-key
+algorithms, the recommended linker flags are `-lhogweed -lnettle
+-lgmp'. If the involved libraries are installed as dynamic libraries, it
+may be sufficient to link with just `-lhogweed', and the loader will
+resolve the dependencies automatically.
 
 
 File: nettle.info,  Node: Reference,  Next: Nettle soup,  Prev: Linking,  Up: Top
 
-Reference
-*********
+6 Reference
+***********
 
 This chapter describes all the Nettle functions, grouped by family.
 
@@ -305,8 +343,8 @@ This chapter describes all the Nettle functions, grouped by family.
 
 File: nettle.info,  Node: Hash functions,  Next: Cipher functions,  Prev: Reference,  Up: Reference
 
-Hash functions
-==============
+6.1 Hash functions
+==================
 
 A cryptographic "hash function" is a function that takes variable size
 strings, and maps them to strings of fixed, short, length. There are
@@ -326,7 +364,7 @@ _Collision-resistant_
 
    Hash functions are useful as building blocks for digital signatures,
 message authentication codes, pseudo random generators, association of
-unique id:s to documents, and many other things.
+unique ids to documents, and many other things.
 
    The most commonly used hash functions are MD5 and SHA1.
 Unfortunately, both these fail the collision-resistance requirement;
@@ -335,30 +373,30 @@ recommended hash function for new applications is SHA256, even though
 it uses a structure similar to MD5 and SHA1. Constructing better hash
 functions is an urgent research problem.
 
-MD5
----
+6.1.1 MD5
+---------
 
 MD5 is a message digest function constructed by Ronald Rivest, and
 described in `RFC 1321'. It outputs message digests of 128 bits, or 16
 octets. Nettle defines MD5 in `<nettle/md5.h>'.
 
- - Context struct: struct md5_ctx
+ -- Context struct: struct md5_ctx
 
- - Constant: MD5_DIGEST_SIZE
+ -- Constant: MD5_DIGEST_SIZE
      The size of an MD5 digest, i.e. 16.
 
- - Constant: MD5_DATA_SIZE
+ -- Constant: MD5_DATA_SIZE
      The internal block size of MD5. Useful for some special
      constructions, in particular HMAC-MD5.
 
- - Function: void md5_init (struct md5_ctx *CTX)
+ -- Function: void md5_init (struct md5_ctx *CTX)
      Initialize the MD5 state.
 
- - Function: void md5_update (struct md5_ctx *CTX, unsigned LENGTH,
+ -- Function: void md5_update (struct md5_ctx *CTX, unsigned LENGTH,
           const uint8_t *DATA)
      Hash some more data.
 
- - Function: void md5_digest (struct md5_ctx *CTX, unsigned LENGTH,
+ -- Function: void md5_digest (struct md5_ctx *CTX, unsigned LENGTH,
           uint8_t *DIGEST)
      Performs final processing and extracts the message digest, writing
      it to DIGEST. LENGTH may be smaller than `MD5_DIGEST_SIZE', in
@@ -374,29 +412,29 @@ state, so you can start over calling `md5_update' to hash new data.
 
    To start over, you can call `md5_init' at any time.
 
-MD2
----
+6.1.2 MD2
+---------
 
 MD2 is another hash function of Ronald Rivest's, described in `RFC
 1319'. It outputs message digests of 128 bits, or 16 octets.  Nettle
 defines MD2 in `<nettle/md2.h>'.
 
- - Context struct: struct md2_ctx
+ -- Context struct: struct md2_ctx
 
- - Constant: MD2_DIGEST_SIZE
+ -- Constant: MD2_DIGEST_SIZE
      The size of an MD2 digest, i.e. 16.
 
- - Constant: MD2_DATA_SIZE
+ -- Constant: MD2_DATA_SIZE
      The internal block size of MD2.
 
- - Function: void md2_init (struct md2_ctx *CTX)
+ -- Function: void md2_init (struct md2_ctx *CTX)
      Initialize the MD2 state.
 
- - Function: void md2_update (struct md2_ctx *CTX, unsigned LENGTH,
+ -- Function: void md2_update (struct md2_ctx *CTX, unsigned LENGTH,
           const uint8_t *DATA)
      Hash some more data.
 
- - Function: void md2_digest (struct md2_ctx *CTX, unsigned LENGTH,
+ -- Function: void md2_digest (struct md2_ctx *CTX, unsigned LENGTH,
           uint8_t *DIGEST)
      Performs final processing and extracts the message digest, writing
      it to DIGEST. LENGTH may be smaller than `MD2_DIGEST_SIZE', in
@@ -405,8 +443,8 @@ defines MD2 in `<nettle/md2.h>'.
      This function also resets the context in the same way as
      `md2_init'.
 
-MD4
----
+6.1.3 MD4
+---------
 
 MD4 is a predecessor of MD5, described in `RFC 1320'. Like MD5, it is
 constructed by Ronald Rivest. It outputs message digests of 128 bits,
@@ -414,22 +452,22 @@ or 16 octets. Nettle defines MD4 in `<nettle/md4.h>'. Use of MD4 is not
 recommended, but it is sometimes needed for compatibility with existing
 applications and protocols.
 
- - Context struct: struct md4_ctx
+ -- Context struct: struct md4_ctx
 
- - Constant: MD4_DIGEST_SIZE
+ -- Constant: MD4_DIGEST_SIZE
      The size of an MD4 digest, i.e. 16.
 
- - Constant: MD4_DATA_SIZE
+ -- Constant: MD4_DATA_SIZE
      The internal block size of MD4.
 
- - Function: void md4_init (struct md4_ctx *CTX)
+ -- Function: void md4_init (struct md4_ctx *CTX)
      Initialize the MD4 state.
 
- - Function: void md4_update (struct md4_ctx *CTX, unsigned LENGTH,
+ -- Function: void md4_update (struct md4_ctx *CTX, unsigned LENGTH,
           const uint8_t *DATA)
      Hash some more data.
 
- - Function: void md4_digest (struct md4_ctx *CTX, unsigned LENGTH,
+ -- Function: void md4_digest (struct md4_ctx *CTX, unsigned LENGTH,
           uint8_t *DIGEST)
      Performs final processing and extracts the message digest, writing
      it to DIGEST. LENGTH may be smaller than `MD4_DIGEST_SIZE', in
@@ -438,8 +476,42 @@ applications and protocols.
      This function also resets the context in the same way as
      `md4_init'.
 
-SHA1
-----
+6.1.4 RIPEMD160
+---------------
+
+RIPEMD160 is a hash function designed by Hans Dobbertin, Antoon
+Bosselaers, and Bart Preneel, as a strengthened version of RIPEMD
+(which, like MD4 and MD5, fails the collision-resistance requirement).
+It produces message digests of 160 bits, or 20 octets. Nettle defined
+RIPEMD160 in `nettle/ripemd160.h'.
+
+ -- Context struct: struct ripemd160_ctx
+
+ -- Constant: RIPEMD160_DIGEST_SIZE
+     The size of an RIPEMD160 digest, i.e. 20.
+
+ -- Constant: RIPEMD160_DATA_SIZE
+     The internal block size of RIPEMD160.
+
+ -- Function: void ripemd160_init (struct ripemd160_ctx *CTX)
+     Initialize the RIPEMD160 state.
+
+ -- Function: void ripemd160_update (struct ripemd160_ctx *CTX,
+          unsigned LENGTH, const uint8_t *DATA)
+     Hash some more data.
+
+ -- Function: void ripemd160_digest (struct ripemd160_ctx *CTX,
+          unsigned LENGTH, uint8_t *DIGEST)
+     Performs final processing and extracts the message digest, writing
+     it to DIGEST. LENGTH may be smaller than `RIPEMD160_DIGEST_SIZE',
+     in which case only the first LENGTH octets of the digest are
+     written.
+
+     This function also resets the context in the same way as
+     `ripemd160_init'.
+
+6.1.5 SHA1
+----------
 
 SHA1 is a hash function specified by "NIST" (The U.S. National Institute
 for Standards and Technology). It outputs hash values of 160 bits, or 20
@@ -447,23 +519,23 @@ octets. Nettle defines SHA1 in `<nettle/sha.h>'.
 
    The functions are analogous to the MD5 ones.
 
- - Context struct: struct sha1_ctx
+ -- Context struct: struct sha1_ctx
 
- - Constant: SHA1_DIGEST_SIZE
+ -- Constant: SHA1_DIGEST_SIZE
      The size of an SHA1 digest, i.e. 20.
 
- - Constant: SHA1_DATA_SIZE
+ -- Constant: SHA1_DATA_SIZE
      The internal block size of SHA1. Useful for some special
      constructions, in particular HMAC-SHA1.
 
- - Function: void sha1_init (struct sha1_ctx *CTX)
+ -- Function: void sha1_init (struct sha1_ctx *CTX)
      Initialize the SHA1 state.
 
- - Function: void sha1_update (struct sha1_ctx *CTX, unsigned LENGTH,
+ -- Function: void sha1_update (struct sha1_ctx *CTX, unsigned LENGTH,
           const uint8_t *DATA)
      Hash some more data.
 
- - Function: void sha1_digest (struct sha1_ctx *CTX, unsigned LENGTH,
+ -- Function: void sha1_digest (struct sha1_ctx *CTX, unsigned LENGTH,
           uint8_t *DIGEST)
      Performs final processing and extracts the message digest, writing
      it to DIGEST. LENGTH may be smaller than `SHA1_DIGEST_SIZE', in
@@ -472,8 +544,8 @@ octets. Nettle defines SHA1 in `<nettle/sha.h>'.
      This function also resets the context in the same way as
      `sha1_init'.
 
-SHA256
-------
+6.1.6 SHA256
+------------
 
 SHA256 is another hash function specified by "NIST", intended as a
 replacement for SHA1, generating larger digests. It outputs hash values
@@ -481,23 +553,23 @@ of 256 bits, or 32 octets. Nettle defines SHA256 in `<nettle/sha.h>'.
 
    The functions are analogous to the MD5 ones.
 
- - Context struct: struct sha256_ctx
+ -- Context struct: struct sha256_ctx
 
- - Constant: SHA256_DIGEST_SIZE
+ -- Constant: SHA256_DIGEST_SIZE
      The size of an SHA256 digest, i.e. 32.
 
- - Constant: SHA256_DATA_SIZE
+ -- Constant: SHA256_DATA_SIZE
      The internal block size of SHA256. Useful for some special
      constructions, in particular HMAC-SHA256.
 
- - Function: void sha256_init (struct sha256_ctx *CTX)
+ -- Function: void sha256_init (struct sha256_ctx *CTX)
      Initialize the SHA256 state.
 
- - Function: void sha256_update (struct sha256_ctx *CTX, unsigned
+ -- Function: void sha256_update (struct sha256_ctx *CTX, unsigned
           LENGTH, const uint8_t *DATA)
      Hash some more data.
 
- - Function: void sha256_digest (struct sha256_ctx *CTX, unsigned
+ -- Function: void sha256_digest (struct sha256_ctx *CTX, unsigned
           LENGTH, uint8_t *DIGEST)
      Performs final processing and extracts the message digest, writing
      it to DIGEST. LENGTH may be smaller than `SHA256_DIGEST_SIZE', in
@@ -506,33 +578,146 @@ of 256 bits, or 32 octets. Nettle defines SHA256 in `<nettle/sha.h>'.
      This function also resets the context in the same way as
      `sha256_init'.
 
-`struct nettle_hash'
---------------------
+6.1.7 SHA224
+------------
+
+SHA224 is a variant of SHA256, with a different initial state, and with
+the output truncated to 224 bits, or 28 octets. Nettle defines SHA224 in
+`<nettle/sha.h>'.
+
+   The functions are analogous to the MD5 ones.
+
+ -- Context struct: struct sha224_ctx
+
+ -- Constant: SHA224_DIGEST_SIZE
+     The size of an SHA224 digest, i.e. 28.
+
+ -- Constant: SHA224_DATA_SIZE
+     The internal block size of SHA224. Useful for some special
+     constructions, in particular HMAC-SHA224.
+
+ -- Function: void sha224_init (struct sha224_ctx *CTX)
+     Initialize the SHA224 state.
+
+ -- Function: void sha224_update (struct sha224_ctx *CTX, unsigned
+          LENGTH, const uint8_t *DATA)
+     Hash some more data.
+
+ -- Function: void sha224_digest (struct sha224_ctx *CTX, unsigned
+          LENGTH, uint8_t *DIGEST)
+     Performs final processing and extracts the message digest, writing
+     it to DIGEST. LENGTH may be smaller than `SHA224_DIGEST_SIZE', in
+     which case only the first LENGTH octets of the digest are written.
+
+     This function also resets the context in the same way as
+     `sha224_init'.
+
+6.1.8 SHA512
+------------
+
+SHA512 is a larger sibling to SHA256, with a very similar structure but
+with both the output and the internal variables of twice the size. The
+internal variables are 64 bits rather than 32, making it significantly
+slower on 32-bit computers. It outputs hash values of 512 bits, or 64
+octets. Nettle defines SHA512 in `<nettle/sha.h>'.
+
+   The functions are analogous to the MD5 ones.
+
+ -- Context struct: struct sha512_ctx
+
+ -- Constant: SHA512_DIGEST_SIZE
+     The size of an SHA512 digest, i.e. 64.
+
+ -- Constant: SHA512_DATA_SIZE
+     The internal block size of SHA512. Useful for some special
+     constructions, in particular HMAC-SHA512.
+
+ -- Function: void sha512_init (struct sha512_ctx *CTX)
+     Initialize the SHA512 state.
+
+ -- Function: void sha512_update (struct sha512_ctx *CTX, unsigned
+          LENGTH, const uint8_t *DATA)
+     Hash some more data.
+
+ -- Function: void sha512_digest (struct sha512_ctx *CTX, unsigned
+          LENGTH, uint8_t *DIGEST)
+     Performs final processing and extracts the message digest, writing
+     it to DIGEST. LENGTH may be smaller than `SHA512_DIGEST_SIZE', in
+     which case only the first LENGTH octets of the digest are written.
+
+     This function also resets the context in the same way as
+     `sha512_init'.
+
+6.1.9 SHA384
+------------
+
+SHA384 is a variant of SHA512, with a different initial state, and with
+the output truncated to 384 bits, or 48 octets. Nettle defines SHA384 in
+`<nettle/sha.h>'.
+
+   The functions are analogous to the MD5 ones.
+
+ -- Context struct: struct sha384_ctx
+
+ -- Constant: SHA384_DIGEST_SIZE
+     The size of an SHA384 digest, i.e. 48.
+
+ -- Constant: SHA384_DATA_SIZE
+     The internal block size of SHA384. Useful for some special
+     constructions, in particular HMAC-SHA384.
+
+ -- Function: void sha384_init (struct sha384_ctx *CTX)
+     Initialize the SHA384 state.
+
+ -- Function: void sha384_update (struct sha384_ctx *CTX, unsigned
+          LENGTH, const uint8_t *DATA)
+     Hash some more data.
+
+ -- Function: void sha384_digest (struct sha384_ctx *CTX, unsigned
+          LENGTH, uint8_t *DIGEST)
+     Performs final processing and extracts the message digest, writing
+     it to DIGEST. LENGTH may be smaller than `SHA384_DIGEST_SIZE', in
+     which case only the first LENGTH octets of the digest are written.
+
+     This function also resets the context in the same way as
+     `sha384_init'.
+
+6.1.10 `struct nettle_hash'
+---------------------------
 
 Nettle includes a struct including information about the supported hash
 functions. It is defined in `<nettle/nettle-meta.h>', and is used by
-Nettle's implementation of HMAC *note Keyed hash functions::.
+Nettle's implementation of HMAC (*note Keyed hash functions::).
 
- - Meta struct: `struct nettle_hash' name context_size digest_size
+ -- Meta struct: `struct nettle_hash' name context_size digest_size
           block_size init update digest
      The last three attributes are function pointers, of types
      `nettle_hash_init_func', `nettle_hash_update_func', and
      `nettle_hash_digest_func'. The first argument to these functions is
-     `void *' pointer so a context struct, which is of size
+     `void *' pointer to a context struct, which is of size
      `context_size'.
 
- - Constant Struct: struct nettle_cipher nettle_md2
- - Constant Struct: struct nettle_cipher nettle_md4
- - Constant Struct: struct nettle_cipher nettle_md5
- - Constant Struct: struct nettle_cipher nettle_sha1
- - Constant Struct: struct nettle_cipher nettle_sha256
+ -- Constant Struct: struct nettle_hash nettle_md2
+ -- Constant Struct: struct nettle_hash nettle_md4
+ -- Constant Struct: struct nettle_hash nettle_md5
+ -- Constant Struct: struct nettle_hash nettle_ripemd160
+ -- Constant Struct: struct nettle_hash nettle_sha1
+ -- Constant Struct: struct nettle_hash nettle_sha224
+ -- Constant Struct: struct nettle_hash nettle_sha256
+ -- Constant Struct: struct nettle_hash nettle_sha384
+ -- Constant Struct: struct nettle_hash nettle_sha512
      These are all the hash functions that Nettle implements.
+
+     Nettle also exports a list of all these hashes.  This list can be
+     used to dynamically enumerate or search the supported algorithms:
+
+ -- Constant Struct: struct nettle_hash ** nettle_hashes
 
 
 File: nettle.info,  Node: Cipher functions,  Next: Cipher modes,  Prev: Hash functions,  Up: Reference
 
-Cipher functions
-================
+6.2 Cipher functions
+====================
 
 A "cipher" is a function that takes a message or "plaintext" and a
 secret "key" and transforms it to a "ciphertext". Given only the
@@ -582,28 +767,26 @@ the message.
 
    It is recommended to _always_ use an authentication mechanism in
 addition to encrypting the messages. Popular choices are Message
-Authentication Codes like HMAC-SHA1 *note Keyed hash functions::, or
+Authentication Codes like HMAC-SHA1 (*note Keyed hash functions::), or
 digital signatures like RSA.
 
    Some ciphers have so called "weak keys", keys that results in
 undesirable structure after the key setup processing, and should be
-avoided. In Nettle, the presence of weak keys for a cipher mean that the
-key setup function can fail, so you have to check its return value. In
-addition, the context struct has a field `status', that is set to a
-non-zero value if key setup fails. When possible, avoid algorithm that
-have weak keys. There are several good ciphers that don't have any weak
-keys.
+avoided. In Nettle, most key setup functions have no return value, but
+for ciphers with weak keys, the return value indicates whether or not
+the given key is weak. For good keys, key setup returns 1, and for weak
+keys, it returns 0. When possible, avoid algorithms that have weak
+keys. There are several good ciphers that don't have any weak keys.
 
    To encrypt a message, you first initialize a cipher context for
 encryption or decryption with a particular key. You then use the context
 to process plaintext or ciphertext messages. The initialization is known
-as called "key setup". With Nettle, it is recommended to use each
-context struct for only one direction, even if some of the ciphers use a
-single key setup function that can be used for both encryption and
-decryption.
+as "key setup". With Nettle, it is recommended to use each context
+struct for only one direction, even if some of the ciphers use a single
+key setup function that can be used for both encryption and decryption.
 
-AES
----
+6.2.1 AES
+---------
 
 AES is a block cipher, specified by NIST as a replacement for the older
 DES standard. The standard is the result of a competition between
@@ -615,43 +798,54 @@ constructed by Joan Daemen and Vincent Rijnmen.
 (16, 24 and 32 octets) being the allowed key sizes. It does not have
 any weak keys. Nettle defines AES in `<nettle/aes.h>'.
 
- - Context struct: struct aes_ctx
+ -- Context struct: struct aes_ctx
 
- - Constant: AES_BLOCK_SIZE
+ -- Constant: AES_BLOCK_SIZE
      The AES block-size, 16
 
- - Constant: AES_MIN_KEY_SIZE
+ -- Constant: AES_MIN_KEY_SIZE
 
- - Constant: AES_MAX_KEY_SIZE
+ -- Constant: AES_MAX_KEY_SIZE
 
- - Constant: AES_KEY_SIZE
+ -- Constant: AES_KEY_SIZE
      Default AES key size, 32
 
- - Function: void aes_set_encrypt_key (struct aes_ctx *CTX, unsigned
+ -- Function: void aes_set_encrypt_key (struct aes_ctx *CTX, unsigned
           LENGTH, const uint8_t *KEY)
- - Function: void aes_set_decrypt_key (struct aes_ctx *CTX, unsigned
+ -- Function: void aes_set_decrypt_key (struct aes_ctx *CTX, unsigned
           LENGTH, const uint8_t *KEY)
      Initialize the cipher, for encryption or decryption, respectively.
 
- - Function: void aes_encrypt (struct aes_ctx *CTX, unsigned LENGTH,
-          const uint8_t *DST, uint8_t *SRC)
+ -- Function: void aes_invert_key (struct aes_ctx *DST, const struct
+          aes_ctx *SRC)
+     Given a context SRC initialized for encryption, initializes the
+     context struct DST for decryption, using the same key. If the same
+     context struct is passed for both `src' and `dst', it is converted
+     in place. Calling `aes_set_encrypt_key' and `aes_invert_key' is
+     more efficient than calling `aes_set_encrypt_key' and
+     `aes_set_decrypt_key'. This function is mainly useful for
+     applications which needs to both encrypt and decrypt using the
+     _same_ key.
+
+ -- Function: void aes_encrypt (struct aes_ctx *CTX, unsigned LENGTH,
+          uint8_t *DST, const uint8_t *SRC)
      Encryption function. LENGTH must be an integral multiple of the
      block size. If it is more than one block, the data is processed in
      ECB mode. `src' and `dst' may be equal, but they must not overlap
      in any other way.
 
- - Function: void aes_decrypt (struct aes_ctx *CTX, unsigned LENGTH,
-          const uint8_t *DST, uint8_t *SRC)
+ -- Function: void aes_decrypt (struct aes_ctx *CTX, unsigned LENGTH,
+          uint8_t *DST, const uint8_t *SRC)
      Analogous to `aes_encrypt'
 
-ARCFOUR
--------
+6.2.2 ARCFOUR
+-------------
 
 ARCFOUR is a stream cipher, also known under the trade marked name RC4,
 and it is one of the fastest ciphers around. A problem is that the key
 setup of ARCFOUR is quite weak, you should never use keys with
 structure, keys that are ordinary passwords, or sequences of keys like
-"secret:1", "secret:2", ..... If you have keys that don't look like
+"secret:1", "secret:2", .... If you have keys that don't look like
 random bit strings, and you want to use ARCFOUR, always hash the key
 before feeding it to ARCFOUR. Furthermore, the initial bytes of the
 generated key stream leak information about the key; for this reason, it
@@ -665,43 +859,43 @@ is recommended to discard the first 512 bytes of the key stream.
        struct sha256_ctx hash;
        uint8_t digest[SHA256_DIGEST_SIZE];
        uint8_t buffer[0x200];
-     
+
        sha256_init(&hash);
        sha256_update(&hash, length, key);
        sha256_digest(&hash, SHA256_DIGEST_SIZE, digest);
-     
+
        arcfour_set_key(ctx, SHA256_DIGEST_SIZE, digest);
        arcfour_crypt(ctx, sizeof(buffer), buffer, buffer);
      }
 
    Nettle defines ARCFOUR in `<nettle/arcfour.h>'.
 
- - Context struct: struct arcfour_ctx
+ -- Context struct: struct arcfour_ctx
 
- - Constant: ARCFOUR_MIN_KEY_SIZE
+ -- Constant: ARCFOUR_MIN_KEY_SIZE
      Minimum key size, 1
 
- - Constant: ARCFOUR_MAX_KEY_SIZE
+ -- Constant: ARCFOUR_MAX_KEY_SIZE
      Maximum key size, 256
 
- - Constant: ARCFOUR_KEY_SIZE
+ -- Constant: ARCFOUR_KEY_SIZE
      Default ARCFOUR key size, 16
 
- - Function: void arcfour_set_key (struct arcfour_ctx *CTX, unsigned
+ -- Function: void arcfour_set_key (struct arcfour_ctx *CTX, unsigned
           LENGTH, const uint8_t *KEY)
      Initialize the cipher. The same function is used for both
      encryption and decryption.
 
- - Function: void arcfour_crypt (struct arcfour_ctx *CTX, unsigned
-          LENGTH, const uint8_t *DST, uint8_t *SRC)
+ -- Function: void arcfour_crypt (struct arcfour_ctx *CTX, unsigned
+          LENGTH, uint8_t *DST, const uint8_t *SRC)
      Encrypt some data. The same function is used for both encryption
      and decryption. Unlike the block ciphers, this function modifies
      the context, so you can split the data into arbitrary chunks and
      encrypt them one after another. The result is the same as if you
      had called `arcfour_crypt' only once with all the data.
 
-ARCTWO
-------
+6.2.3 ARCTWO
+------------
 
 ARCTWO (also known as the trade marked name RC2) is a block cipher
 specified in RFC 2268. Nettle also include a variation of the ARCTWO
@@ -720,23 +914,23 @@ ARCTWO in `<nettle/arctwo.h>'.
 provided primarily for interoperability with existing applications and
 standards.
 
- - Context struct: struct arctwo_ctx
+ -- Context struct: struct arctwo_ctx
 
- - Constant: ARCTWO_BLOCK_SIZE
-     The AES block-size, 8
+ -- Constant: ARCTWO_BLOCK_SIZE
+     The ARCTWO block-size, 8
 
- - Constant: ARCTWO_MIN_KEY_SIZE
+ -- Constant: ARCTWO_MIN_KEY_SIZE
 
- - Constant: ARCTWO_MAX_KEY_SIZE
+ -- Constant: ARCTWO_MAX_KEY_SIZE
 
- - Constant: ARCTWO_KEY_SIZE
+ -- Constant: ARCTWO_KEY_SIZE
      Default ARCTWO key size, 8
 
- - Function: void arctwo_set_key_ekb (struct arctwo_ctx *CTX, unsigned
+ -- Function: void arctwo_set_key_ekb (struct arctwo_ctx *CTX, unsigned
           LENGTH, const uint8_t *KEY, unsigned EKB)
- - Function: void arctwo_set_key (struct arctwo_ctx *CTX, unsigned
+ -- Function: void arctwo_set_key (struct arctwo_ctx *CTX, unsigned
           LENGTH, const uint8_t *KEY)
- - Function: void arctwo_set_key_gutmann (struct arctwo_ctx *CTX,
+ -- Function: void arctwo_set_key_gutmann (struct arctwo_ctx *CTX,
           unsigned LENGTH, const uint8_t *KEY)
      Initialize the cipher. The same function is used for both
      encryption and decryption. The first function is the most general
@@ -750,100 +944,156 @@ standards.
      `arctwo_set_key_gutmann(ctx, length, key)' is equivalent to
      `arctwo_set_key_ekb(ctx, length, key, 1024)'
 
- - Function: void arctwo_encrypt (struct arctwo_ctx *CTX, unsigned
-          LENGTH, const uint8_t *DST, uint8_t *SRC)
+ -- Function: void arctwo_encrypt (struct arctwo_ctx *CTX, unsigned
+          LENGTH, uint8_t *DST, const uint8_t *SRC)
      Encryption function. LENGTH must be an integral multiple of the
      block size. If it is more than one block, the data is processed in
      ECB mode. `src' and `dst' may be equal, but they must not overlap
      in any other way.
 
- - Function: void arctwo_decrypt (struct arctwo_ctx *CTX, unsigned
-          LENGTH, const uint8_t *DST, uint8_t *SRC)
+ -- Function: void arctwo_decrypt (struct arctwo_ctx *CTX, unsigned
+          LENGTH, uint8_t *DST, const uint8_t *SRC)
      Analogous to `arctwo_encrypt'
 
-CAST128
--------
-
-CAST-128 is a block cipher, specified in `RFC 2144'. It uses a 64 bit
-(8 octets) block size, and a variable key size of up to 128 bits.
-Nettle defines cast128 in `<nettle/cast128.h>'.
-
- - Context struct: struct cast128_ctx
-
- - Constant: CAST128_BLOCK_SIZE
-     The CAST128 block-size, 8
-
- - Constant: CAST128_MIN_KEY_SIZE
-     Minimum CAST128 key size, 5
-
- - Constant: CAST128_MAX_KEY_SIZE
-     Maximum CAST128 key size, 16
-
- - Constant: CAST128_KEY_SIZE
-     Default CAST128 key size, 16
-
- - Function: void cast128_set_key (struct cast128_ctx *CTX, unsigned
-          LENGTH, const uint8_t *KEY)
-     Initialize the cipher. The same function is used for both
-     encryption and decryption.
-
- - Function: void cast128_encrypt (struct cast128_ctx *CTX, unsigned
-          LENGTH, const uint8_t *DST, uint8_t *SRC)
-     Encryption function. LENGTH must be an integral multiple of the
-     block size. If it is more than one block, the data is processed in
-     ECB mode. `src' and `dst' may be equal, but they must not overlap
-     in any other way.
-
- - Function: void cast128_decrypt (struct cast128_ctx *CTX, unsigned
-          LENGTH, const uint8_t *DST, uint8_t *SRC)
-     Analogous to `cast128_encrypt'
-
-BLOWFISH
---------
+6.2.4 BLOWFISH
+--------------
 
 BLOWFISH is a block cipher designed by Bruce Schneier. It uses a block
 size of 64 bits (8 octets), and a variable key size, up to 448 bits. It
 has some weak keys. Nettle defines BLOWFISH in `<nettle/blowfish.h>'.
 
- - Context struct: struct blowfish_ctx
+ -- Context struct: struct blowfish_ctx
 
- - Constant: BLOWFISH_BLOCK_SIZE
+ -- Constant: BLOWFISH_BLOCK_SIZE
      The BLOWFISH block-size, 8
 
- - Constant: BLOWFISH_MIN_KEY_SIZE
+ -- Constant: BLOWFISH_MIN_KEY_SIZE
      Minimum BLOWFISH key size, 8
 
- - Constant: BLOWFISH_MAX_KEY_SIZE
+ -- Constant: BLOWFISH_MAX_KEY_SIZE
      Maximum BLOWFISH key size, 56
 
- - Constant: BLOWFISH_KEY_SIZE
+ -- Constant: BLOWFISH_KEY_SIZE
      Default BLOWFISH key size, 16
 
- - Function: int blowfish_set_key (struct blowfish_ctx *CTX, unsigned
+ -- Function: int blowfish_set_key (struct blowfish_ctx *CTX, unsigned
           LENGTH, const uint8_t *KEY)
      Initialize the cipher. The same function is used for both
-     encryption and decryption. Returns 1 on success, and 0 if the key
-     was weak. Calling `blowfish_encrypt' or `blowfish_decrypt' with a
-     weak key will crash with an assert violation.
+     encryption and decryption. Checks for weak keys, returning 1 for
+     good keys and 0 for weak keys. Applications that don't care about
+     weak keys can ignore the return value.
 
- - Function: void blowfish_encrypt (struct blowfish_ctx *CTX, unsigned
-          LENGTH, const uint8_t *DST, uint8_t *SRC)
+     `blowfish_encrypt' or `blowfish_decrypt' with a weak key will
+     crash with an assert violation.
+
+ -- Function: void blowfish_encrypt (struct blowfish_ctx *CTX, unsigned
+          LENGTH, uint8_t *DST, const uint8_t *SRC)
      Encryption function. LENGTH must be an integral multiple of the
      block size. If it is more than one block, the data is processed in
      ECB mode. `src' and `dst' may be equal, but they must not overlap
      in any other way.
 
- - Function: void blowfish_decrypt (struct blowfish_ctx *CTX, unsigned
-          LENGTH, const uint8_t *DST, uint8_t *SRC)
+ -- Function: void blowfish_decrypt (struct blowfish_ctx *CTX, unsigned
+          LENGTH, uint8_t *DST, const uint8_t *SRC)
      Analogous to `blowfish_encrypt'
 
-DES
----
+6.2.5 Camellia
+--------------
+
+Camellia is a block cipher developed by Mitsubishi and Nippon Telegraph
+and Telephone Corporation, described in `RFC3713', and recommended by
+some Japanese and European authorities as an alternative to AES. The
+algorithm is patented. The implementation in Nettle is derived from the
+implementation released by NTT under the GNU LGPL (v2.1 or later), and
+relies on the implicit patent license of the LGPL. There is also a
+statement of royalty-free licensing for Camellia at
+`http://www.ntt.co.jp/news/news01e/0104/010417.html', but this
+statement has some limitations which seem problematic for free software.
+
+   Camellia uses a the same block size and key sizes as AES: The block
+size is 128 bits (16 octets), and the supported key sizes are 128, 192,
+and 256 bits. Nettle defines Camellia in `<nettle/camellia.h>'.
+
+ -- Context struct: struct camellia_ctx
+
+ -- Constant: CAMELLIA_BLOCK_SIZE
+     The CAMELLIA block-size, 16
+
+ -- Constant: CAMELLIA_MIN_KEY_SIZE
+
+ -- Constant: CAMELLIA_MAX_KEY_SIZE
+
+ -- Constant: CAMELLIA_KEY_SIZE
+     Default CAMELLIA key size, 32
+
+ -- Function: void camellia_set_encrypt_key (struct camellia_ctx *CTX,
+          unsigned LENGTH, const uint8_t *KEY)
+ -- Function: void camellia_set_decrypt_key (struct camellia_ctx *CTX,
+          unsigned LENGTH, const uint8_t *KEY)
+     Initialize the cipher, for encryption or decryption, respectively.
+
+ -- Function: void camellia_invert_key (struct camellia_ctx *DST, const
+          struct camellia_ctx *SRC)
+     Given a context SRC initialized for encryption, initializes the
+     context struct DST for decryption, using the same key. If the same
+     context struct is passed for both `src' and `dst', it is converted
+     in place. Calling `camellia_set_encrypt_key' and
+     `camellia_invert_key' is more efficient than calling
+     `camellia_set_encrypt_key' and `camellia_set_decrypt_key'. This
+     function is mainly useful for applications which needs to both
+     encrypt and decrypt using the _same_ key.
+
+ -- Function: void camellia_crypt (struct camellia_ctx *CTX, unsigned
+          LENGTH, uint8_t *DST, const uint8_t *SRC)
+     The same function is used for both encryption and decryption.
+     LENGTH must be an integral multiple of the block size. If it is
+     more than one block, the data is processed in ECB mode. `src' and
+     `dst' may be equal, but they must not overlap in any other way.
+
+6.2.6 CAST128
+-------------
+
+CAST-128 is a block cipher, specified in `RFC 2144'. It uses a 64 bit
+(8 octets) block size, and a variable key size of up to 128 bits.
+Nettle defines cast128 in `<nettle/cast128.h>'.
+
+ -- Context struct: struct cast128_ctx
+
+ -- Constant: CAST128_BLOCK_SIZE
+     The CAST128 block-size, 8
+
+ -- Constant: CAST128_MIN_KEY_SIZE
+     Minimum CAST128 key size, 5
+
+ -- Constant: CAST128_MAX_KEY_SIZE
+     Maximum CAST128 key size, 16
+
+ -- Constant: CAST128_KEY_SIZE
+     Default CAST128 key size, 16
+
+ -- Function: void cast128_set_key (struct cast128_ctx *CTX, unsigned
+          LENGTH, const uint8_t *KEY)
+     Initialize the cipher. The same function is used for both
+     encryption and decryption.
+
+ -- Function: void cast128_encrypt (struct cast128_ctx *CTX, unsigned
+          LENGTH, uint8_t *DST, const uint8_t *SRC)
+     Encryption function. LENGTH must be an integral multiple of the
+     block size. If it is more than one block, the data is processed in
+     ECB mode. `src' and `dst' may be equal, but they must not overlap
+     in any other way.
+
+ -- Function: void cast128_decrypt (struct cast128_ctx *CTX, unsigned
+          LENGTH, uint8_t *DST, const uint8_t *SRC)
+     Analogous to `cast128_encrypt'
+
+6.2.7 DES
+---------
 
 DES is the old Data Encryption Standard, specified by NIST. It uses a
 block size of 64 bits (8 octets), and a key size of 56 bits. However,
 the key bits are distributed over 8 octets, where the least significant
-bit of each octet is used for parity. A common way to use DES is to
+bit of each octet may be used for parity. A common way to use DES is to
 generate 8 random octets in some way, then set the least significant bit
 of each octet to get odd parity, and initialize DES with the resulting
 key.
@@ -855,40 +1105,46 @@ DES at all one should be using "triple DES", see DES3 below.
 
    DES also has some weak keys. Nettle defines DES in `<nettle/des.h>'.
 
- - Context struct: struct des_ctx
+ -- Context struct: struct des_ctx
 
- - Constant: DES_BLOCK_SIZE
+ -- Constant: DES_BLOCK_SIZE
      The DES block-size, 8
 
- - Constant: DES_KEY_SIZE
+ -- Constant: DES_KEY_SIZE
      DES key size, 8
 
- - Function: int des_set_key (struct des_ctx *CTX, const uint8_t *KEY)
+ -- Function: int des_set_key (struct des_ctx *CTX, const uint8_t *KEY)
      Initialize the cipher. The same function is used for both
-     encryption and decryption. Returns 1 on success, and 0 if the key
-     was weak or had bad parity. Calling `des_encrypt' or `des_decrypt'
-     with a bad key will crash with an assert violation.
+     encryption and decryption. Parity bits are ignored. Checks for
+     weak keys, returning 1 for good keys and 0 for weak keys.
+     Applications that don't care about weak keys can ignore the return
+     value.
 
- - Function: void des_encrypt (struct des_ctx *CTX, unsigned LENGTH,
-          const uint8_t *DST, uint8_t *SRC)
+ -- Function: void des_encrypt (struct des_ctx *CTX, unsigned LENGTH,
+          uint8_t *DST, const uint8_t *SRC)
      Encryption function. LENGTH must be an integral multiple of the
      block size. If it is more than one block, the data is processed in
      ECB mode. `src' and `dst' may be equal, but they must not overlap
      in any other way.
 
- - Function: void des_decrypt (struct des_ctx *CTX, unsigned LENGTH,
-          const uint8_t *DST, uint8_t *SRC)
+ -- Function: void des_decrypt (struct des_ctx *CTX, unsigned LENGTH,
+          uint8_t *DST, const uint8_t *SRC)
      Analogous to `des_encrypt'
 
- - Function: void des_fix_parity (unsigned LENGTH, uint8_t *DST, const
+ -- Function: int des_check_parity (unsigned LENGTH, const uint8_t
+          *KEY);
+     Checks that the given key has correct, odd, parity. Returns 1 for
+     correct parity, and 0 for bad parity.
+
+ -- Function: void des_fix_parity (unsigned LENGTH, uint8_t *DST, const
           uint8_t *SRC)
      Adjusts the parity bits to match DES's requirements. You need this
      function if you have created a random-looking string by a key
      agreement protocol, and want to use it as a DES key. DST and SRC
      may be equal.
 
-DES3
-----
+6.2.8 DES3
+----------
 
 The inadequate key size of DES has already been mentioned. One way to
 increase the key size is to pipe together several DES boxes with
@@ -923,36 +1179,38 @@ functions. Nettle includes an implementation of three-key "ede"
 triple-DES, it is defined in the same place as plain DES,
 `<nettle/des.h>'.
 
- - Context struct: struct des3_ctx
+ -- Context struct: struct des3_ctx
 
- - Constant: DES3_BLOCK_SIZE
+ -- Constant: DES3_BLOCK_SIZE
      The DES3 block-size is the same as DES_BLOCK_SIZE, 8
 
- - Constant: DES3_KEY_SIZE
+ -- Constant: DES3_KEY_SIZE
      DES key size, 24
 
- - Function: int des3_set_key (struct des3_ctx *CTX, const uint8_t *KEY)
+ -- Function: int des3_set_key (struct des3_ctx *CTX, const uint8_t
+          *KEY)
      Initialize the cipher. The same function is used for both
-     encryption and decryption. Returns 1 on success, and 0 if the key
-     was weak or had bad parity. Calling `des_encrypt' or `des_decrypt'
-     with a bad key will crash with an assert violation.
+     encryption and decryption. Parity bits are ignored. Checks for
+     weak keys, returning 1 if all three keys are good keys, and 0 if
+     one or more key is weak.  Applications that don't care about weak
+     keys can ignore the return value.
 
    For random-looking strings, you can use `des_fix_parity' to adjust
 the parity bits before calling `des3_set_key'.
 
- - Function: void des3_encrypt (struct des3_ctx *CTX, unsigned LENGTH,
-          const uint8_t *DST, uint8_t *SRC)
+ -- Function: void des3_encrypt (struct des3_ctx *CTX, unsigned LENGTH,
+          uint8_t *DST, const uint8_t *SRC)
      Encryption function. LENGTH must be an integral multiple of the
      block size. If it is more than one block, the data is processed in
      ECB mode. `src' and `dst' may be equal, but they must not overlap
      in any other way.
 
- - Function: void des3_decrypt (struct des3_ctx *CTX, unsigned LENGTH,
-          const uint8_t *DST, uint8_t *SRC)
+ -- Function: void des3_decrypt (struct des3_ctx *CTX, unsigned LENGTH,
+          uint8_t *DST, const uint8_t *SRC)
      Analogous to `des_encrypt'
 
-SERPENT
--------
+6.2.9 SERPENT
+-------------
 
 SERPENT is one of the AES finalists, designed by Ross Anderson, Eli
 Biham and Lars Knudsen. Thus, the interface and properties are similar
@@ -960,74 +1218,74 @@ to AES'. One peculiarity is that it is quite pointless to use it with
 anything but the maximum key size, smaller keys are just padded to
 larger ones. Nettle defines SERPENT in `<nettle/serpent.h>'.
 
- - Context struct: struct serpent_ctx
+ -- Context struct: struct serpent_ctx
 
- - Constant: SERPENT_BLOCK_SIZE
+ -- Constant: SERPENT_BLOCK_SIZE
      The SERPENT block-size, 16
 
- - Constant: SERPENT_MIN_KEY_SIZE
+ -- Constant: SERPENT_MIN_KEY_SIZE
      Minimum SERPENT key size, 16
 
- - Constant: SERPENT_MAX_KEY_SIZE
+ -- Constant: SERPENT_MAX_KEY_SIZE
      Maximum SERPENT key size, 32
 
- - Constant: SERPENT_KEY_SIZE
+ -- Constant: SERPENT_KEY_SIZE
      Default SERPENT key size, 32
 
- - Function: void serpent_set_key (struct serpent_ctx *CTX, unsigned
+ -- Function: void serpent_set_key (struct serpent_ctx *CTX, unsigned
           LENGTH, const uint8_t *KEY)
      Initialize the cipher. The same function is used for both
      encryption and decryption.
 
- - Function: void serpent_encrypt (struct serpent_ctx *CTX, unsigned
-          LENGTH, const uint8_t *DST, uint8_t *SRC)
+ -- Function: void serpent_encrypt (struct serpent_ctx *CTX, unsigned
+          LENGTH, uint8_t *DST, const uint8_t *SRC)
      Encryption function. LENGTH must be an integral multiple of the
      block size. If it is more than one block, the data is processed in
      ECB mode. `src' and `dst' may be equal, but they must not overlap
      in any other way.
 
- - Function: void serpent_decrypt (struct serpent_ctx *CTX, unsigned
-          LENGTH, const uint8_t *DST, uint8_t *SRC)
+ -- Function: void serpent_decrypt (struct serpent_ctx *CTX, unsigned
+          LENGTH, uint8_t *DST, const uint8_t *SRC)
      Analogous to `serpent_encrypt'
 
-TWOFISH
--------
+6.2.10 TWOFISH
+--------------
 
 Another AES finalist, this one designed by Bruce Schneier and others.
 Nettle defines it in `<nettle/twofish.h>'.
 
- - Context struct: struct twofish_ctx
+ -- Context struct: struct twofish_ctx
 
- - Constant: TWOFISH_BLOCK_SIZE
+ -- Constant: TWOFISH_BLOCK_SIZE
      The TWOFISH block-size, 16
 
- - Constant: TWOFISH_MIN_KEY_SIZE
+ -- Constant: TWOFISH_MIN_KEY_SIZE
      Minimum TWOFISH key size, 16
 
- - Constant: TWOFISH_MAX_KEY_SIZE
+ -- Constant: TWOFISH_MAX_KEY_SIZE
      Maximum TWOFISH key size, 32
 
- - Constant: TWOFISH_KEY_SIZE
+ -- Constant: TWOFISH_KEY_SIZE
      Default TWOFISH key size, 32
 
- - Function: void twofish_set_key (struct twofish_ctx *CTX, unsigned
+ -- Function: void twofish_set_key (struct twofish_ctx *CTX, unsigned
           LENGTH, const uint8_t *KEY)
      Initialize the cipher. The same function is used for both
      encryption and decryption.
 
- - Function: void twofish_encrypt (struct twofish_ctx *CTX, unsigned
-          LENGTH, const uint8_t *DST, uint8_t *SRC)
+ -- Function: void twofish_encrypt (struct twofish_ctx *CTX, unsigned
+          LENGTH, uint8_t *DST, const uint8_t *SRC)
      Encryption function. LENGTH must be an integral multiple of the
      block size. If it is more than one block, the data is processed in
      ECB mode. `src' and `dst' may be equal, but they must not overlap
      in any other way.
 
- - Function: void twofish_decrypt (struct twofish_ctx *CTX, unsigned
-          LENGTH, const uint8_t *DST, uint8_t *SRC)
+ -- Function: void twofish_decrypt (struct twofish_ctx *CTX, unsigned
+          LENGTH, uint8_t *DST, const uint8_t *SRC)
      Analogous to `twofish_encrypt'
 
-`struct nettle_cipher'
-----------------------
+6.2.11 `struct nettle_cipher'
+-----------------------------
 
 Nettle includes a struct including information about some of the more
 regular cipher functions. It should be considered a little experimental,
@@ -1035,49 +1293,71 @@ but can be useful for applications that need a simple way to handle
 various algorithms. Nettle defines these structs in
 `<nettle/nettle-meta.h>'.
 
- - Meta struct: `struct nettle_cipher' name context_size block_size
+ -- Meta struct: `struct nettle_cipher' name context_size block_size
           key_size set_encrypt_key set_decrypt_key encrypt decrypt
      The last four attributes are function pointers, of types
      `nettle_set_key_func' and `nettle_crypt_func'. The first argument
      to these functions is a `void *' pointer to a context struct,
      which is of size `context_size'.
 
- - Constant Struct: struct nettle_cipher nettle_aes128
- - Constant Struct: struct nettle_cipher nettle_aes192
- - Constant Struct: struct nettle_cipher nettle_aes256
- - Constant Struct: struct nettle_cipher nettle_arcfour128
- - Constant Struct: struct nettle_cipher nettle_cast128
- - Constant Struct: struct nettle_cipher nettle_serpent128
- - Constant Struct: struct nettle_cipher nettle_serpent192
- - Constant Struct: struct nettle_cipher nettle_serpent256
- - Constant Struct: struct nettle_cipher nettle_twofish128
- - Constant Struct: struct nettle_cipher nettle_twofish192
- - Constant Struct: struct nettle_cipher nettle_twofish256
- - Constant Struct: struct nettle_cipher nettle_arctwo40;
- - Constant Struct: struct nettle_cipher nettle_arctwo64;
- - Constant Struct: struct nettle_cipher nettle_arctwo128;
- - Constant Struct: struct nettle_cipher nettle_arctwo_gutmann128;
+ -- Constant Struct: struct nettle_cipher nettle_aes128
+ -- Constant Struct: struct nettle_cipher nettle_aes192
+ -- Constant Struct: struct nettle_cipher nettle_aes256
+ -- Constant Struct: struct nettle_cipher nettle_arctwo40;
+ -- Constant Struct: struct nettle_cipher nettle_arctwo64;
+ -- Constant Struct: struct nettle_cipher nettle_arctwo128;
+ -- Constant Struct: struct nettle_cipher nettle_arctwo_gutmann128;
+ -- Constant Struct: struct nettle_cipher nettle_arcfour128
+ -- Constant Struct: struct nettle_cipher nettle_camellia128
+ -- Constant Struct: struct nettle_cipher nettle_camellia192
+ -- Constant Struct: struct nettle_cipher nettle_camellia256
+ -- Constant Struct: struct nettle_cipher nettle_cast128
+ -- Constant Struct: struct nettle_cipher nettle_serpent128
+ -- Constant Struct: struct nettle_cipher nettle_serpent192
+ -- Constant Struct: struct nettle_cipher nettle_serpent256
+ -- Constant Struct: struct nettle_cipher nettle_twofish128
+ -- Constant Struct: struct nettle_cipher nettle_twofish192
+ -- Constant Struct: struct nettle_cipher nettle_twofish256
      Nettle includes such structs for all the _regular_ ciphers, i.e.
      ones without weak keys or other oddities.
+
+     Nettle also exports a list of all these ciphers without weak keys
+     or other oddities.  This list can be used to dynamically enumerate
+     or search the supported algorithms:
+
+ -- Constant Struct: struct nettle_cipher ** nettle_ciphers
 
 
 File: nettle.info,  Node: Cipher modes,  Next: Keyed hash functions,  Prev: Cipher functions,  Up: Reference
 
-Cipher modes
-============
+6.3 Cipher modes
+================
 
-Cipher modes of operation specifies the procedure to use when
-encrypting a message that is larger than the cipher's block size. As
-explained in *Note Cipher functions::, splitting the message into blocks
-and processing them independently with the block cipher (Electronic Code
-Book mode, ECB) leaks information. Besides ECB, Nettle provides two
-other modes of operation: Cipher Block Chaining (CBC) and Counter mode
-(CTR). CBC is widely used, but there are a few subtle issues of
-information leakage.  CTR was standardized more recently, and is
-believed to be more secure.
+Cipher modes of operation specifies the procedure to use when encrypting
+a message that is larger than the cipher's block size. As explained in
+*Note Cipher functions::, splitting the message into blocks and
+processing them independently with the block cipher (Electronic Code
+Book mode, ECB) leaks information. Besides ECB, Nettle provides three
+other modes of operation: Cipher Block Chaining (CBC), Counter mode
+(CTR), and Galois/Counter mode (gcm). CBC is widely used, but there are
+a few subtle issues of information leakage, see, e.g., SSH CBC
+vulnerability (http://www.kb.cert.org/vuls/id/958563). CTR and GCM were
+standardized more recently, and are believed to be more secure.  GCM
+includes message authentication; for the other modes, one should always
+use a MAC (*note Keyed hash functions::) or signature to authenticate
+the message.
 
-Cipher Block Chaining
----------------------
+* Menu:
+
+* CBC::
+* CTR::
+* GCM::
+
+
+File: nettle.info,  Node: CBC,  Next: CTR,  Prev: Cipher modes,  Up: Cipher modes
+
+6.3.1 Cipher Block Chaining
+---------------------------
 
 When using CBC mode, plaintext blocks are not encrypted independently
 of each other, like in Electronic Cook Book mode. Instead, when
@@ -1095,19 +1375,19 @@ and `IV' is the initialization vector, then `n' plaintext blocks
 
      C_1 = E_k(IV  XOR M_1)
      C_2 = E_k(C_1 XOR M_2)
-     
+
      ...
-     
+
      C_n = E_k(C_(n-1) XOR M_n)
 
    Nettle's includes two functions for applying a block cipher in Cipher
 Block Chaining (CBC) mode, one for encryption and one for decryption.
 These functions uses `void *' to pass cipher contexts around.
 
- - Function: void cbc_encrypt (void *CTX, nettle_crypt_func F, unsigned
-          BLOCK_SIZE, uint8_t *IV, unsigned LENGTH, uint8_t *DST, const
-          uint8_t *SRC)
- - Function: void cbc_decrypt (void *CTX, void (*F)(), unsigned
+ -- Function: void cbc_encrypt (void *CTX, nettle_crypt_func F,
+          unsigned BLOCK_SIZE, uint8_t *IV, unsigned LENGTH, uint8_t
+          *DST, const uint8_t *SRC)
+ -- Function: void cbc_decrypt (void *CTX, void (*F)(), unsigned
           BLOCK_SIZE, uint8_t *IV, unsigned LENGTH, uint8_t *DST, const
           uint8_t *SRC)
      Applies the encryption or decryption function F in CBC mode. The
@@ -1123,8 +1403,8 @@ These functions uses `void *' to pass cipher contexts around.
 
    There are also some macros to help use these functions correctly.
 
- - Macro: CBC_CTX (CONTEXT_TYPE, BLOCK_SIZE)
-     Expands into
+ -- Macro: CBC_CTX (CONTEXT_TYPE, BLOCK_SIZE)
+     Expands to
           {
              context_type ctx;
              uint8_t iv[block_size];
@@ -1138,13 +1418,13 @@ These functions uses `void *' to pass cipher contexts around.
 
      struct aes_cbc_ctx CBC_CTX (struct aes_ctx, AES_BLOCK_SIZE);
 
- - Macro: CBC_SET_IV (CTX, IV)
+ -- Macro: CBC_SET_IV (CTX, IV)
      First argument is a pointer to a context struct as defined by
      `CBC_CTX', and the second is a pointer to an Initialization Vector
      (IV) that is copied into that context.
 
- - Macro: CBC_ENCRYPT (CTX, F, LENGTH, DST, SRC)
- - Macro: CBC_DECRYPT (CTX, F, LENGTH, DST, SRC)
+ -- Macro: CBC_ENCRYPT (CTX, F, LENGTH, DST, SRC)
+ -- Macro: CBC_DECRYPT (CTX, F, LENGTH, DST, SRC)
      A simpler way to invoke `cbc_encrypt' and `cbc_decrypt'. The first
      argument is a pointer to a context struct as defined by `CBC_CTX',
      and the second argument is an encryption or decryption function
@@ -1155,8 +1435,11 @@ These functions uses `void *' to pass cipher contexts around.
 if the types of F and CTX don't match, e.g. if you try to use an
 `struct aes_ctx' context with the `des_encrypt' function.
 
-Counter mode
-------------
+
+File: nettle.info,  Node: CTR,  Next: GCM,  Prev: CBC,  Up: Cipher modes
+
+6.3.2 Counter mode
+------------------
 
 Counter mode (CTR) uses the block cipher as a keyed pseudo-random
 generator. The output of the generator is XORed with the data to be
@@ -1174,9 +1457,9 @@ ciphertext blocks `C_1',...  `C_n' as follows:
 
      C_1 = E_k(IC) XOR M_1
      C_2 = E_k(IC + 1) XOR M_2
-     
+
      ...
-     
+
      C_(n-1) = E_k(IC + n - 2) XOR M_(n-1)
      C_n = E_k(IC + n - 1) [1..m] XOR M_n
 
@@ -1185,7 +1468,7 @@ as the IV for CBC. When adding, `IC + x', IC is interpreted as an
 integer, in network byte order. For the last block, `E_k(IC + n - 1)
 [1..m]' means that the cipher output is truncated to `m' bytes.
 
- - Function: void ctr_crypt (void *CTX, nettle_crypt_func F, unsigned
+ -- Function: void ctr_crypt (void *CTX, nettle_crypt_func F, unsigned
           BLOCK_SIZE, uint8_t *CTR, unsigned LENGTH, uint8_t *DST,
           const uint8_t *SRC)
      Applies the encryption function F in CTR mode. Note that for CTR
@@ -1199,19 +1482,19 @@ integer, in network byte order. For the last block, `E_k(IC + n - 1)
 
    Like for CBC, there are also a couple of helper macros.
 
- - Macro: CTR_CTX (CONTEXT_TYPE, BLOCK_SIZE)
-     Expands into
+ -- Macro: CTR_CTX (CONTEXT_TYPE, BLOCK_SIZE)
+     Expands to
           {
              context_type ctx;
              uint8_t ctr[block_size];
           }
 
- - Macro: CTR_SET_COUNTER (CTX, IV)
+ -- Macro: CTR_SET_COUNTER (CTX, IV)
      First argument is a pointer to a context struct as defined by
      `CTR_CTX', and the second is a pointer to an initial counter that
      is copied into that context.
 
- - Macro: CTR_CRYPT (CTX, F, LENGTH, DST, SRC)
+ -- Macro: CTR_CRYPT (CTX, F, LENGTH, DST, SRC)
      A simpler way to invoke `ctr_crypt'. The first argument is a
      pointer to a context struct as defined by `CTR_CTX', and the second
      argument is an encryption function following Nettle's conventions.
@@ -1219,10 +1502,189 @@ integer, in network byte order. For the last block, `E_k(IC + n - 1)
      for the operation.
 
 
+File: nettle.info,  Node: GCM,  Prev: CTR,  Up: Cipher modes
+
+6.3.3 Galois counter mode
+-------------------------
+
+Galois counter mode is the combination of counter mode with message
+authentication based on universal hashing. The main objective of the
+design is to provide high performance for hardware implementations,
+where other popular MAC algorithms (*note Keyed hash functions::
+becomes a bottleneck for high-speed hardware implementations.  It was
+proposed by David A. McGrew and John Viega in 2005, and recommended by
+NIST in 2007, NIST Special Publication 800-38D
+(http://csrc.nist.gov/publications/nistpubs/800-38D/SP-800-38D.pdf). It
+is constructed on top of a block cipher which must have a block size of
+128 bits.
+
+   GCM is applied to messages of arbitrary length. The inputs are:
+
+   * A key, which can be used for many messages.
+
+   * An initialization vector (IV) which _must_ be unique for each
+     message.
+
+   * Additional authenticated data, which is to be included in the
+     message authentication, but not encrypted. May be empty.
+
+   * The plaintext. Maybe empty.
+
+   The outputs are a ciphertext, of the same length as the plaintext,
+and a message digest of length 128 bits. Nettle's support for GCM
+consists of a low-level general interface, some convenience macros, and
+specific functions for GCM using AES as the underlying cipher. These
+interfaces are defined in `<nettle/gcm.h>'
+
+6.3.3.1 General GCM interface
+.............................
+
+ -- Context struct: struct gcm_key
+     Message independent hash subkey, and related tables.
+
+ -- Context struct: struct gcm_ctx
+     Holds state corresponding to a particular message.
+
+ -- Constant: GCM_BLOCK_SIZE
+     GCM's block size, 16.
+
+ -- Constant: GCM_IV_SIZE
+     Recommended size of the IV, 12. Other sizes are allowed.
+
+ -- Function: void gcm_set_key (struct gcm_key *KEY, void *CIPHER,
+          nettle_crypt_func *F)
+     Initializes KEY. CIPHER gives a context struct for the underlying
+     cipher, which must have been previously initialized for
+     encryption, and F is the encryption function.
+
+ -- Function: void gcm_set_iv (struct gcm_ctx *CTX, const struct
+          gcm_key *KEY, unsigned LENGTH, const uint8_t *IV)
+     Initializes CTX using the given IV. The KEY argument is actually
+     needed only if LENGTH differs from `GCM_IV_SIZE'.
+
+ -- Function: void gcm_update (struct gcm_ctx *CTX, const struct
+          gcm_key *KEY, unsigned LENGTH, const uint8_t *DATA)
+     Provides associated data to be authenticated. If used, must be
+     called before `gcm_encrypt' or `gcm_decrypt'. All but the last call
+     for each message _must_ use a length that is a multiple of the
+     block size.
+
+ -- Function: void gcm_encrypt (struct gcm_ctx *CTX, const struct
+          gcm_key *KEY void *CIPHER, nettle_crypt_func *F, unsigned
+          LENGTH, uint8_t *DST, const uint8_t *SRC)
+ -- Function: void gcm_decrypt (struct gcm_ctx *CTX, const struct
+          gcm_key *KEY, void *CIPHER, nettle_crypt_func *F, unsigned
+          LENGTH, uint8_t *DST, const uint8_t *SRC)
+     Encrypts or decrypts the data of a message. CIPHER is the context
+     struct for the underlying cipher and F is the encryption function.
+     All but the last call for each message _must_ use a length that is
+     a multiple of the block size.
+
+ -- Function: void gcm_digest (struct gcm_ctx *CTX, const struct
+          gcm_key *KEY, void *CIPHER, nettle_crypt_func *F, unsigned
+          LENGTH, uint8_t *DIGEST)
+     Extracts the message digest (also known "authentication tag").
+     This is the final operation when processing a message. LENGTH is
+     usually equal to `GCM_BLOCK_SIZE', but if you provide a smaller
+     value, only the first LENGTH octets of the digest are written.
+
+   To encrypt a message using GCM, first initialize a context for the
+underlying block cipher with a key to use for encryption. Then call the
+above functions in the following order: `gcm_set_key', `gcm_set_iv',
+`gcm_update', `gcm_encrypt', `gcm_digest'. The decryption procedure is
+analogous, just calling `gcm_decrypt' instead of `gcm_encrypt' (note
+that GCM decryption still uses the encryption function of the
+underlying block cipher). To process a new message, using the same key,
+call `gcm_set_iv' with a new iv.
+
+6.3.3.2 GCM helper macros
+.........................
+
+The following macros are defined.
+
+ -- Macro: GCM_CTX (CONTEXT_TYPE)
+     This defines an all-in-one context struct, including the context
+     of the underlying cipher, the hash subkey, and the per-message
+     state. It expands to
+          {
+             context_type cipher;
+             struct gcm_key key;
+             struct gcm_ctx gcm;
+          }
+
+   Example use:
+     struct gcm_aes_ctx GCM_CTX(struct aes_ctx);
+
+   The following macros operate on context structs of this form.
+
+ -- Macro: GCM_SET_KEY (CTX, SET_KEY, ENCRYPT, LENGTH, DATA)
+     First argument, CTX, is a context struct as defined by `GCM_CTX'.
+     SET_KEY and ENCRYPT are functions for setting the encryption key
+     and for encrypting data using the underlying cipher. LENGTH and
+     DATA give the key.
+
+ -- Macro: GCM_SET_IV (CTX, LENGTH, DATA)
+     First argument is a context struct as defined by `GCM_CTX'. LENGTH
+     and DATA give the initialization vector (IV).
+
+ -- Macro: GCM_UPDATE (CTX, LENGTH, DATA)
+     Simpler way to call `gcm_update'. First argument is a context
+     struct as defined by `GCM_CTX'
+
+ -- Macro: GCM_ENCRYPT (CTX, ENCRYPT, LENGTH, DST, SRC)
+ -- Macro: GCM_DECRYPT (CTX, ENCRYPT, LENGTH, DST, SRC)
+ -- Macro: GCM_DIGEST (CTX, ENCRYPT, LENGTH, DIGEST)
+     Simpler way to call `gcm_encrypt', `gcm_decrypt' or `gcm_digest'.
+     First argument is a context struct as defined by `GCM_CTX'. Second
+     argument, ENCRYPT, is a pointer to the encryption function of the
+     underlying cipher.
+
+6.3.3.3 GCM-AES interface
+.........................
+
+The following functions implement the common case of GCM using AES as
+the underlying cipher.
+
+ -- Context struct: struct gcm_aes_ctx
+     The context struct, defined using `GCM_CTX'.
+
+ -- Function: void gcm_aes_set_key (struct gcm_aes_ctx *CTX, unsigned
+          LENGTH, const uint8_t *KEY)
+     Initializes CTX using the given key. All valid AES key sizes can
+     be used.
+
+ -- Function: void gcm_aes_set_iv (struct gcm_aes_ctx *CTX, unsigned
+          LENGTH, const uint8_t *IV)
+     Initializes the per-message state, using the given IV.
+
+ -- Function: void gcm_aes_update (struct gcm_aes_ctx *CTX, unsigned
+          LENGTH, const uint8_t *DATA)
+     Provides associated data to be authenticated. If used, must be
+     called before `gcm_aes_encrypt' or `gcm_aes_decrypt'. All but the
+     last call for each message _must_ use a length that is a multiple
+     of the block size.
+
+ -- Function: void gcm_aes_encrypt (struct gcm_aes_ctx *CTX, unsigned
+          LENGTH, uint8_t *DST, const uint8_t *SRC)
+ -- Function: void gcm_aes_decrypt (struct gcm_aes_ctx *CTX, unsigned
+          LENGTH, uint8_t *DST, const uint8_t *SRC)
+     Encrypts or decrypts the data of a message. All but the last call
+     for each message _must_ use a length that is a multiple of the
+     block size.
+
+
+ -- Function: void gcm_aes_digest (struct gcm_aes_ctx *CTX, unsigned
+          LENGTH, uint8_t *DIGEST)
+     Extracts the message digest (also known "authentication tag").
+     This is the final operation when processing a message. LENGTH is
+     usually equal to `GCM_BLOCK_SIZE', but if you provide a smaller
+     value, only the first LENGTH octets of the digest are written.
+
+
 File: nettle.info,  Node: Keyed hash functions,  Next: Public-key algorithms,  Prev: Cipher modes,  Up: Reference
 
-Keyed Hash Functions
-====================
+6.4 Keyed Hash Functions
+========================
 
 A "keyed hash function", or "Message Authentication Code" (MAC) is a
 function that takes a key and a message, and produces fixed size MAC.
@@ -1250,8 +1712,8 @@ between a MAC created by Alice and one created by Bob.
    Keyed hash functions are typically a lot faster than digital
 signatures as well.
 
-HMAC
-----
+6.4.1 HMAC
+----------
 
 One can build keyed hash functions from ordinary hash functions. Older
 constructions simply concatenate secret key and message and hashes
@@ -1273,10 +1735,10 @@ that are longer than `b' are shortened to length `l' by hashing with
 abstract functions that use a pointer to a `struct nettle_hash' to
 represent the underlying hash function and `void *' pointers that point
 to three different context structs for that hash function. There are
-also concrete functions for HMAC-MD5, HMAC-SHA1, and HMAC-SHA256.
-First, the abstract functions:
+also concrete functions for HMAC-MD5, HMAC-RIPEMD160 HMAC-SHA1,
+HMAC-SHA256, and HMAC-SHA512. First, the abstract functions:
 
- - Function: void hmac_set_key (void *OUTER, void *INNER, void *STATE,
+ -- Function: void hmac_set_key (void *OUTER, void *INNER, void *STATE,
           const struct nettle_hash *H, unsigned LENGTH, const uint8_t
           *KEY)
      Initializes the three context structs from the key. The OUTER and
@@ -1284,14 +1746,14 @@ First, the abstract functions:
      is used for hashing the message, and is initialized as a copy of
      the INNER context.
 
- - Function: void hmac_update (void *STATE, const struct nettle_hash
+ -- Function: void hmac_update (void *STATE, const struct nettle_hash
           *H, unsigned LENGTH, const uint8_t *DATA)
      This function is called zero or more times to process the message.
      Actually, `hmac_update(state, H, length, data)' is equivalent to
      `H->update(state, length, data)', so if you wish you can use the
      ordinary update function of the underlying hash function instead.
 
- - Function: void hmac_digest (const void *OUTER, const void *INNER,
+ -- Function: void hmac_digest (const void *OUTER, const void *INNER,
           void *STATE, const struct nettle_hash *H, unsigned LENGTH,
           uint8_t *DIGEST)
      Extracts the MAC of the message, writing it to DIGEST.  OUTER and
@@ -1305,8 +1767,8 @@ First, the abstract functions:
    Like for CBC, there are some macros to help use these functions
 correctly.
 
- - Macro: HMAC_CTX (TYPE)
-     Expands into
+ -- Macro: HMAC_CTX (TYPE)
+     Expands to
           {
              type outer;
              type inner;
@@ -1321,13 +1783,13 @@ correctly.
 
      struct hmac_md5_ctx HMAC_CTX (struct md5_ctx);
 
- - Macro: HMAC_SET_KEY (CTX, H, LENGTH, KEY)
+ -- Macro: HMAC_SET_KEY (CTX, H, LENGTH, KEY)
      CTX is a pointer to a context struct as defined by `HMAC_CTX', H
      is a pointer to a `const struct nettle_hash' describing the
      underlying hash function (so it must match the type of the
      components of CTX). The last two arguments specify the secret key.
 
- - Macro: HMAC_DIGEST (CTX, H, LENGTH, DIGEST)
+ -- Macro: HMAC_DIGEST (CTX, H, LENGTH, DIGEST)
      CTX is a pointer to a context struct as defined by `HMAC_CTX', H
      is a pointer to a `const struct nettle_hash' describing the
      underlying hash function. The last two arguments specify where the
@@ -1337,26 +1799,26 @@ correctly.
 function directly, or the update function of the underlying hash
 function.
 
-Concrete HMAC functions
------------------------
+6.4.2 Concrete HMAC functions
+-----------------------------
 
 Now we come to the specialized HMAC functions, which are easier to use
 than the general HMAC functions.
 
-HMAC-MD5
-........
+6.4.2.1 HMAC-MD5
+................
 
- - Context struct: struct hmac_md5_ctx
+ -- Context struct: struct hmac_md5_ctx
 
- - Function: void hmac_md5_set_key (struct hmac_md5_ctx *CTX, unsigned
+ -- Function: void hmac_md5_set_key (struct hmac_md5_ctx *CTX, unsigned
           KEY_LENGTH, const uint8_t *KEY)
      Initializes the context with the key.
 
- - Function: void hmac_md5_update (struct hmac_md5_ctx *CTX, unsigned
+ -- Function: void hmac_md5_update (struct hmac_md5_ctx *CTX, unsigned
           LENGTH, const uint8_t *DATA)
      Process some more data.
 
- - Function: void hmac_md5_digest (struct hmac_md5_ctx *CTX, unsigned
+ -- Function: void hmac_md5_digest (struct hmac_md5_ctx *CTX, unsigned
           LENGTH, uint8_t *DIGEST)
      Extracts the MAC, writing it to DIGEST. LENGTH may be smaller than
      `MD5_DIGEST_SIZE', in which case only the first LENGTH octets of
@@ -1365,21 +1827,43 @@ HMAC-MD5
      This function also resets the context for processing new messages,
      with the same key.
 
-HMAC-SHA1
-.........
+6.4.2.2 HMAC-RIPEMD160
+......................
 
- - Context struct: struct hmac_sha1_ctx
+ -- Context struct: struct hmac_ripemd160_ctx
 
- - Function: void hmac_sha1_set_key (struct hmac_sha1_ctx *CTX,
+ -- Function: void hmac_ripemd160_set_key (struct hmac_ripemd160_ctx
+          *CTX, unsigned KEY_LENGTH, const uint8_t *KEY)
+     Initializes the context with the key.
+
+ -- Function: void hmac_ripemd160_update (struct hmac_ripemd160_ctx
+          *CTX, unsigned LENGTH, const uint8_t *DATA)
+     Process some more data.
+
+ -- Function: void hmac_ripemd160_digest (struct hmac_ripemd160_ctx
+          *CTX, unsigned LENGTH, uint8_t *DIGEST)
+     Extracts the MAC, writing it to DIGEST. LENGTH may be smaller than
+     `RIPEMD160_DIGEST_SIZE', in which case only the first LENGTH
+     octets of the MAC are written.
+
+     This function also resets the context for processing new messages,
+     with the same key.
+
+6.4.2.3 HMAC-SHA1
+.................
+
+ -- Context struct: struct hmac_sha1_ctx
+
+ -- Function: void hmac_sha1_set_key (struct hmac_sha1_ctx *CTX,
           unsigned KEY_LENGTH, const uint8_t *KEY)
      Initializes the context with the key.
 
- - Function: void hmac_sha1_update (struct hmac_sha1_ctx *CTX, unsigned
-          LENGTH, const uint8_t *DATA)
+ -- Function: void hmac_sha1_update (struct hmac_sha1_ctx *CTX,
+          unsigned LENGTH, const uint8_t *DATA)
      Process some more data.
 
- - Function: void hmac_sha1_digest (struct hmac_sha1_ctx *CTX, unsigned
-          LENGTH, uint8_t *DIGEST)
+ -- Function: void hmac_sha1_digest (struct hmac_sha1_ctx *CTX,
+          unsigned LENGTH, uint8_t *DIGEST)
      Extracts the MAC, writing it to DIGEST. LENGTH may be smaller than
      `SHA1_DIGEST_SIZE', in which case only the first LENGTH octets of
      the MAC are written.
@@ -1387,20 +1871,20 @@ HMAC-SHA1
      This function also resets the context for processing new messages,
      with the same key.
 
-HMAC-SHA256
-...........
+6.4.2.4 HMAC-SHA256
+...................
 
- - Context struct: struct hmac_sha256_ctx
+ -- Context struct: struct hmac_sha256_ctx
 
- - Function: void hmac_sha256_set_key (struct hmac_sha256_ctx *CTX,
+ -- Function: void hmac_sha256_set_key (struct hmac_sha256_ctx *CTX,
           unsigned KEY_LENGTH, const uint8_t *KEY)
      Initializes the context with the key.
 
- - Function: void hmac_sha256_update (struct hmac_sha256_ctx *CTX,
+ -- Function: void hmac_sha256_update (struct hmac_sha256_ctx *CTX,
           unsigned LENGTH, const uint8_t *DATA)
      Process some more data.
 
- - Function: void hmac_sha256_digest (struct hmac_sha256_ctx *CTX,
+ -- Function: void hmac_sha256_digest (struct hmac_sha256_ctx *CTX,
           unsigned LENGTH, uint8_t *DIGEST)
      Extracts the MAC, writing it to DIGEST. LENGTH may be smaller than
      `SHA256_DIGEST_SIZE', in which case only the first LENGTH octets
@@ -1409,11 +1893,33 @@ HMAC-SHA256
      This function also resets the context for processing new messages,
      with the same key.
 
+6.4.2.5 HMAC-SHA512
+...................
+
+ -- Context struct: struct hmac_sha512_ctx
+
+ -- Function: void hmac_sha512_set_key (struct hmac_sha512_ctx *CTX,
+          unsigned KEY_LENGTH, const uint8_t *KEY)
+     Initializes the context with the key.
+
+ -- Function: void hmac_sha512_update (struct hmac_sha512_ctx *CTX,
+          unsigned LENGTH, const uint8_t *DATA)
+     Process some more data.
+
+ -- Function: void hmac_sha512_digest (struct hmac_sha512_ctx *CTX,
+          unsigned LENGTH, uint8_t *DIGEST)
+     Extracts the MAC, writing it to DIGEST. LENGTH may be smaller than
+     `SHA512_DIGEST_SIZE', in which case only the first LENGTH octets
+     of the MAC are written.
+
+     This function also resets the context for processing new messages,
+     with the same key.
+
 
 File: nettle.info,  Node: Public-key algorithms,  Next: Randomness,  Prev: Keyed hash functions,  Up: Reference
 
-Public-key algorithms
-=====================
+6.5 Public-key algorithms
+=========================
 
 Nettle uses GMP, the GNU bignum library, for all calculations with
 large numbers. In order to use the public-key features of Nettle, you
@@ -1488,8 +1994,8 @@ particular public key, and to no others".
 
 File: nettle.info,  Node: RSA,  Next: DSA,  Prev: Public-key algorithms,  Up: Public-key algorithms
 
-RSA
----
+6.5.1 RSA
+---------
 
 The RSA algorithm was the first practical digital signature algorithm
 that was constructed. It was described 1978 in a paper by Ronald
@@ -1521,7 +2027,7 @@ modulo n.
    Next, `e' is chosen. It must have no factors in common with `phi' (in
 particular, it must be odd), but can otherwise be chosen more or less
 randomly. `e = 65537' is a popular choice, because it makes raising to
-the `e':th power particularly efficient, and being prime, it usually
+the `e''th power particularly efficient, and being prime, it usually
 has no factors common with `phi'.
 
    Finally, a number `d', `d < n' is computed such that `e d mod phi =
@@ -1552,17 +2058,17 @@ sequence of octets, most significant octet first.
 the message in the same way as above. Then `s^e mod n' is computed, the
 operation returns true if and only if the result equals `x'.
 
-Nettle's RSA support
---------------------
+6.5.2 Nettle's RSA support
+--------------------------
 
 Nettle represents RSA keys using two structures that contain large
 numbers (of type `mpz_t').
 
- - Context struct: rsa_public_key size n e
+ -- Context struct: rsa_public_key size n e
      `size' is the size, in octets, of the modulo, and is used
      internally.  `n' and `e' is the public key.
 
- - Context struct: rsa_private_key size d p q a b c
+ -- Context struct: rsa_private_key size d p q a b c
      `size' is the size, in octets, of the modulo, and is used
      internally.  `d' is the secret exponent, but it is not actually
      used when signing. Instead, the factors `p' and `q', and the
@@ -1572,15 +2078,15 @@ numbers (of type `mpz_t').
 
    Before use, these structs must be initialized by calling one of
 
- - Function: void rsa_public_key_init (struct rsa_public_key *PUB)
- - Function: void rsa_private_key_init (struct rsa_private_key *KEY)
+ -- Function: void rsa_public_key_init (struct rsa_public_key *PUB)
+ -- Function: void rsa_private_key_init (struct rsa_private_key *KEY)
      Calls `mpz_init' on all numbers in the key struct.
 
    and when finished with them, the space for the numbers must be
 deallocated by calling one of
 
- - Function: void rsa_public_key_clear (struct rsa_public_key *PUB)
- - Function: void rsa_private_key_clear (struct rsa_private_key *KEY)
+ -- Function: void rsa_public_key_clear (struct rsa_public_key *PUB)
+ -- Function: void rsa_private_key_clear (struct rsa_private_key *KEY)
      Calls `mpz_clear' on all numbers in the key struct.
 
    In general, Nettle's RSA functions deviates from Nettle's "no memory
@@ -1592,58 +2098,75 @@ Allocation.
    When you have assigned values to the attributes of a key, you must
 call
 
- - Function: int rsa_public_key_prepare (struct rsa_public_key *PUB)
- - Function: int rsa_private_key_prepare (struct rsa_private_key *KEY)
+ -- Function: int rsa_public_key_prepare (struct rsa_public_key *PUB)
+ -- Function: int rsa_private_key_prepare (struct rsa_private_key *KEY)
      Computes the octet size of the key (stored in the `size' attribute,
      and may also do other basic sanity checks. Returns one if
      successful, or zero if the key can't be used, for instance if the
-     modulo is smaller than the minimum size specified by PKCS#1.
+     modulo is smaller than the minimum size needed for RSA operations
+     specified by PKCS#1.
 
    Before signing or verifying a message, you first hash it with the
 appropriate hash function. You pass the hash function's context struct
 to the RSA signature function, and it will extract the message digest
 and do the rest of the work. There are also alternative functions that
-take the MD5 or SHA1 hash digest as argument.
+take the hash digest as argument.
+
+   There is currently no support for using SHA224 or SHA384 with RSA
+signatures, since there's no gain in either computation time nor
+message size compared to using SHA256 and SHA512, respectively.
 
    Creation and verification of signatures is done with the following
 functions:
 
- - Function: void rsa_md5_sign (const struct rsa_private_key *KEY,
+ -- Function: int rsa_md5_sign (const struct rsa_private_key *KEY,
           struct md5_ctx *HASH, mpz_t SIGNATURE)
- - Function: void rsa_sha1_sign (const struct rsa_private_key *KEY,
+ -- Function: int rsa_sha1_sign (const struct rsa_private_key *KEY,
           struct sha1_ctx *HASH, mpz_t SIGNATURE)
- - Function: void rsa_sha256_sign (const struct rsa_private_key *KEY,
+ -- Function: int rsa_sha256_sign (const struct rsa_private_key *KEY,
           struct sha256_ctx *HASH, mpz_t SIGNATURE)
+ -- Function: int rsa_sha512_sign (const struct rsa_private_key *KEY,
+          struct sha512_ctx *HASH, mpz_t SIGNATURE)
      The signature is stored in SIGNATURE (which must have been
-     `mpz_init':ed earlier). The hash context is reset so that it can be
-     used for new messages.
+     `mpz_init''ed earlier). The hash context is reset so that it can be
+     used for new messages. Returns one on success, or zero on failure.
+     Signing fails if the key is too small for the given hash size,
+     e.g., it's not possible to create a signature using SHA512 and a
+     512-bit RSA key.
 
- - Function: void rsa_md5_sign_digest (const struct rsa_private_key
+ -- Function: int rsa_md5_sign_digest (const struct rsa_private_key
           *KEY, const uint8_t *DIGEST, mpz_t SIGNATURE)
- - Function: void rsa_sha1_sign_digest (const struct rsa_private_key
+ -- Function: int rsa_sha1_sign_digest (const struct rsa_private_key
           *KEY, const uint8_t *DIGEST, mpz_t SIGNATURE);
- - Function: void rsa_sha256_sign_digest (const struct rsa_private_key
+ -- Function: int rsa_sha256_sign_digest (const struct rsa_private_key
+          *KEY, const uint8_t *DIGEST, mpz_t SIGNATURE);
+ -- Function: int rsa_sha512_sign_digest (const struct rsa_private_key
           *KEY, const uint8_t *DIGEST, mpz_t SIGNATURE);
      Creates a signature from the given hash digest. DIGEST should
      point to a digest of size `MD5_DIGEST_SIZE', `SHA1_DIGEST_SIZE',
      or `SHA256_DIGEST_SIZE', respectively. The signature is stored in
-     SIGNATURE (which must have been `mpz_init':ed earlier)
+     SIGNATURE (which must have been `mpz_init':ed earlier). Returns
+     one on success, or zero on failure.
 
- - Function: int rsa_md5_verify (const struct rsa_public_key *KEY,
+ -- Function: int rsa_md5_verify (const struct rsa_public_key *KEY,
           struct md5_ctx *HASH, const mpz_t SIGNATURE)
- - Function: int rsa_sha1_verify (const struct rsa_public_key *KEY,
+ -- Function: int rsa_sha1_verify (const struct rsa_public_key *KEY,
           struct sha1_ctx *HASH, const mpz_t SIGNATURE)
- - Function: int rsa_sha256_verify (const struct rsa_public_key *KEY,
+ -- Function: int rsa_sha256_verify (const struct rsa_public_key *KEY,
           struct sha256_ctx *HASH, const mpz_t SIGNATURE)
+ -- Function: int rsa_sha512_verify (const struct rsa_public_key *KEY,
+          struct sha512_ctx *HASH, const mpz_t SIGNATURE)
      Returns 1 if the signature is valid, or 0 if it isn't. In either
      case, the hash context is reset so that it can be used for new
      messages.
 
- - Function: int rsa_md5_verify_digest (const struct rsa_public_key
+ -- Function: int rsa_md5_verify_digest (const struct rsa_public_key
           *KEY, const uint8_t *DIGEST, const mpz_t SIGNATURE)
- - Function: int rsa_sha1_verify_digest (const struct rsa_public_key
+ -- Function: int rsa_sha1_verify_digest (const struct rsa_public_key
           *KEY, const uint8_t *DIGEST, const mpz_t SIGNATURE)
- - Function: int rsa_sha256_verify_digest (const struct rsa_public_key
+ -- Function: int rsa_sha256_verify_digest (const struct rsa_public_key
+          *KEY, const uint8_t *DIGEST, const mpz_t SIGNATURE)
+ -- Function: int rsa_sha512_verify_digest (const struct rsa_public_key
           *KEY, const uint8_t *DIGEST, const mpz_t SIGNATURE)
      Returns 1 if the signature is valid, or 0 if it isn't. DIGEST
      should point to a digest of size `MD5_DIGEST_SIZE',
@@ -1653,13 +2176,13 @@ functions:
 isn't supported by the above functions Nettle also includes a function
 that computes `x^d mod n' and nothing more, using the CRT optimization.
 
- - Function: void rsa_compute_root (struct rsa_private_key *KEY, mpz_t
+ -- Function: void rsa_compute_root (struct rsa_private_key *KEY, mpz_t
           X, const mpz_t M)
      Computes `x = m^d', efficiently.
 
    At last, how do you create new keys?
 
- - Function: int rsa_generate_keypair (struct rsa_public_key *PUB,
+ -- Function: int rsa_generate_keypair (struct rsa_public_key *PUB,
           struct rsa_private_key *KEY, void *RANDOM_CTX,
           nettle_random_func RANDOM, void *PROGRESS_CTX,
           nettle_progress_func PROGRESS, unsigned N_SIZE, unsigned
@@ -1682,9 +2205,9 @@ that computes `x^d mod n' and nothing more, using the CRT optimization.
      non-zero, it is the desired size of the public exponent and a
      random exponent of that size is selected. But if E_SIZE is zero,
      it is assumed that the caller has already chosen a value for `e',
-     and stored it in PUB.  Returns 1 on success, and 0 on failure. The
-     function can fail for example if if N_SIZE is too small, or if
-     E_SIZE is zero and `pub->e' is an even number.
+     and stored it in PUB.  Returns one on success, and zero on
+     failure. The function can fail for example if if N_SIZE is too
+     small, or if E_SIZE is zero and `pub->e' is an even number.
 
 
 File: nettle.info,  Node: RSA-Footnotes,  Up: RSA
@@ -1696,13 +2219,15 @@ the result is the same.
 
 File: nettle.info,  Node: DSA,  Prev: RSA,  Up: Public-key algorithms
 
-Nettle's DSA support
---------------------
+6.5.3 Nettle's DSA support
+--------------------------
 
 The DSA digital signature algorithm is more complex than RSA. It was
 specified during the early 1990s, and in 1994 NIST published FIPS 186
 which is the authoritative specification.  Sometimes DSA is referred to
-using the acronym DSS, for Digital Signature Standard.
+using the acronym DSS, for Digital Signature Standard. The most recent
+revision of the specification, FIPS186-3, was issueed in 2009, and it
+adds support for larger hash functions than sha1.
 
    For DSA, the underlying mathematical problem is the computation of
 discreet logarithms. The public key consists of a large prime `p', a
@@ -1710,11 +2235,12 @@ small prime `q' which is a factor of `p-1', a number `g' which
 generates a subgroup of order `q' modulo `p', and an element `y' in
 that subgroup.
 
-   The size of `q' is fixed to 160 bits, to match with the SHA1 hash
-algorithm which is used in DSA. The size of `q' is in principle
+   In the original DSA, the size of `q' is fixed to 160 bits, to match
+with the SHA1 hash algorithm. The size of `p' is in principle
 unlimited, but the standard specifies only nine specific sizes: `512 +
 l*64', where `l' is between 0 and 8. Thus, the maximum size of `p' is
-1024 bits, at that is also the recommended size.
+1024 bits, and sizes less than 1024 bits are considered obsolete and not
+secure.
 
    The subgroup requirement means that if you compute
 
@@ -1728,12 +2254,37 @@ values.
      g^x = y mod p
 
    In mathematical speak, `x' is the "discrete logarithm" of `y' mod
-`p', with respect to the generator `d'. The size of `x' will also be
-about 160 bits.
+`p', with respect to the generator `g'. The size of `x' will also be
+about the same size as `q'. The security of the DSA algorithm relies on
+the difficulty of the discrete logarithm problem. Current algorithms to
+compute discrete logarithms in this setting, and hence crack DSA, are
+of two types. The first type works directly in the (multiplicative)
+group of integers mod `p'. The best known algorithm of this type is the
+Number Field Sieve, and it's complexity is similar to the complexity of
+factoring numbers of the same size as `p'. The other type works in the
+smaller `q'-sized subgroup generated by `g', which has a more difficult
+group structure. One good algorithm is Pollard-rho, which has
+complexity `sqrt(q)'.
+
+   The important point is that security depends on the size of _both_
+`p' and `q', and they should be choosen so that the difficulty of both
+discrete logarithm methods are comparable. Today, the security margin
+of the original DSA may be uncomfortably small. Using a `p' of 1024
+bits implies that cracking using the number field sieve is expected to
+take about the same time as factoring a 1024-bit RSA modulo, and using
+a `q' of size 160 bits implies that cracking using Pollard-rho will
+take roughly `2^80' group operations. With the size of `q' fixed, tied
+to the SHA1 digest size, it may be tempting to increase the size of `p'
+to, say, 4096 bits. This will provide excellent resistance against
+attacks like the number field sieve which works in the large group. But
+it will do very little to defend against Pollard-rho attacking the small
+subgroup; the attacker is slowed down at most by a single factor of 10
+due to the more expensive group operation. And the attacker will surely
+choose the latter attack.
 
    The signature generation algorithm is randomized; in order to create
 a DSA signature, you need a good source for random numbers (*note
-Randomness::).
+Randomness::). Let us describe the common case of a 160-bit `q'.
 
    To create a signature, one starts with the hash digest of the
 message, `h', which is a 160 bit number, and a random number `k,
@@ -1763,7 +2314,13 @@ signature, we don't know either `k' or `x': those numbers are secret.
    If you can choose between RSA and DSA, which one is best? Both are
 believed to be secure. DSA gained popularity in the late 1990s, as a
 patent free alternative to RSA. Now that the RSA patents have expired,
-there's no compelling reason to want to use DSA.
+there's no compelling reason to want to use DSA. Today, the original
+DSA key size does not provide a large security margin, and it should
+probably be phased out together with RSA keys of 1024 bits. Using the
+revised DSA algorithm with a larger hash function, in particular,
+SHA256, a 256-bit `q', and `p' of size 2048 bits or more, should
+provide for a more comfortable security margin, but these variants are
+not yet in wide use.
 
    DSA signatures are smaller than RSA signatures, which is important
 for some specialized applications.
@@ -1772,8 +2329,8 @@ for some specialized applications.
 source is a serious disadvantage. If you ever use the same `k' (and
 `r') for two different message, you leak your private key.
 
-Nettle's DSA support
---------------------
+6.5.4 Nettle's DSA support
+--------------------------
 
 Like for RSA, Nettle represents DSA keys using two structures,
 containing values of type `mpz_t'. For information on how to customize
@@ -1784,71 +2341,91 @@ functions, but there are a few differences pointed out below. For a
 start, there are no functions corresponding to `rsa_public_key_prepare'
 and `rsa_private_key_prepare'.
 
- - Context struct: dsa_public_key p q g y
+ -- Context struct: dsa_public_key p q g y
      The public parameters described above.
 
- - Context struct: dsa_private_key x
+ -- Context struct: dsa_private_key x
      The private key `x'.
 
    Before use, these structs must be initialized by calling one of
 
- - Function: void dsa_public_key_init (struct dsa_public_key *PUB)
- - Function: void dsa_private_key_init (struct dsa_private_key *KEY)
+ -- Function: void dsa_public_key_init (struct dsa_public_key *PUB)
+ -- Function: void dsa_private_key_init (struct dsa_private_key *KEY)
      Calls `mpz_init' on all numbers in the key struct.
 
    When finished with them, the space for the numbers must be
 deallocated by calling one of
 
- - Function: void dsa_public_key_clear (struct dsa_public_key *PUB)
- - Function: void dsa_private_key_clear (struct dsa_private_key *KEY)
+ -- Function: void dsa_public_key_clear (struct dsa_public_key *PUB)
+ -- Function: void dsa_private_key_clear (struct dsa_private_key *KEY)
      Calls `mpz_clear' on all numbers in the key struct.
 
    Signatures are represented using the structure below, and need to be
 initialized and cleared in the same way as the key structs.
 
- - Context struct: dsa_signature r s
+ -- Context struct: dsa_signature r s
 
- - Function: void dsa_signature_init (struct dsa_signature *SIGNATURE)
- - Function: void dsa_signature_clear (struct dsa_signature *SIGNATURE)
+ -- Function: void dsa_signature_init (struct dsa_signature *SIGNATURE)
+ -- Function: void dsa_signature_clear (struct dsa_signature *SIGNATURE)
      You must call `dsa_signature_init' before creating or using a
      signature, and call `dsa_signature_clear' when you are finished
      with it.
 
    For signing, you need to provide both the public and the private key
 (unlike RSA, where the private key struct includes all information
-needed for signing), and a source for random numbers.  Signatures
-always use the SHA1 hash function.
+needed for signing), and a source for random numbers.  Signatures can
+use the SHA1 or the SHA256 hash function, although the implementation
+of DSA with SHA256 should be considered somewhat experimental due to
+lack of official test vectors and interoperability testing.
 
- - Function: void dsa_sign (const struct dsa_public_key *PUB, const
-          struct dsa_private_key *KEY, void *RANDOM_CTX,
+ -- Function: int dsa_sha1_sign (const struct dsa_public_key *PUB,
+          const struct dsa_private_key *KEY, void *RANDOM_CTX,
           nettle_random_func RANDOM, struct sha1_ctx *HASH, struct
           dsa_signature *SIGNATURE)
- - Function: void dsa_sign_digest (const struct dsa_public_key *PUB,
+ -- Function: int dsa_sha1_sign_digest (const struct dsa_public_key
+          *PUB, const struct dsa_private_key *KEY, void *RANDOM_CTX,
+          nettle_random_func RANDOM, const uint8_t *DIGEST, struct
+          dsa_signature *SIGNATURE)
+ -- Function: int dsa_sha256_sign (const struct dsa_public_key *PUB,
           const struct dsa_private_key *KEY, void *RANDOM_CTX,
+          nettle_random_func RANDOM, struct sha256_ctx *HASH, struct
+          dsa_signature *SIGNATURE)
+ -- Function: int dsa_sha256_sign_digest (const struct dsa_public_key
+          *PUB, const struct dsa_private_key *KEY, void *RANDOM_CTX,
           nettle_random_func RANDOM, const uint8_t *DIGEST, struct
           dsa_signature *SIGNATURE)
      Creates a signature from the given hash context or digest.
      RANDOM_CTX and RANDOM is a randomness generator.
      `random(random_ctx, length, dst)' should generate `length' random
-     octets and store them at `dst'. For advice, see *Note Randomness::.
+     octets and store them at `dst'. For advice, see *Note
+     Randomness::. Returns one on success, or zero on failure.  Signing
+     fails if the key size and the hash size don't match.
 
    Verifying signatures is a little easier, since no randomness
 generator is needed. The functions are
 
- - Function: int dsa_verify (const struct dsa_public_key *KEY, struct
-          sha1_ctx *HASH, const struct dsa_signature *SIGNATURE)
- - Function: int dsa_verify_digest (const struct dsa_public_key *KEY,
-          const uint8_t *DIGEST, const struct dsa_signature *SIGNATURE)
+ -- Function: int dsa_sha1_verify (const struct dsa_public_key *KEY,
+          struct sha1_ctx *HASH, const struct dsa_signature *SIGNATURE)
+ -- Function: int dsa_sha1_verify_digest (const struct dsa_public_key
+          *KEY, const uint8_t *DIGEST, const struct dsa_signature
+          *SIGNATURE)
+ -- Function: int dsa_sha256_verify (const struct dsa_public_key *KEY,
+          struct sha256_ctx *HASH, const struct dsa_signature
+          *SIGNATURE)
+ -- Function: int dsa_sha256_verify_digest (const struct dsa_public_key
+          *KEY, const uint8_t *DIGEST, const struct dsa_signature
+          *SIGNATURE)
      Verifies a signature. Returns 1 if the signature is valid,
      otherwise 0.
 
    Key generation uses mostly the same parameters as the corresponding
 RSA function.
 
- - Function: int dsa_generate_keypair (struct dsa_public_key *PUB,
+ -- Function: int dsa_generate_keypair (struct dsa_public_key *PUB,
           struct dsa_private_key *KEY, void *RANDOM_CTX,
           nettle_random_func RANDOM, void *PROGRESS_CTX,
-          nettle_progress_func PROGRESS, unsigned BITS)
+          nettle_progress_func PROGRESS, unsigned P_BITS, unsigned
+          Q_BITS)
      PUB and KEY is where the resulting key pair is stored. The structs
      should be initialized before you call this function.
 
@@ -1861,24 +2438,29 @@ RSA function.
      progress. PROGRESS can be NULL, in that case there are no
      callbacks.
 
-     BITS is the desired size of `p', in bits. To generate keys that
-     conform to the standard, you must use a value of the form `512 +
-     l*64', for `0 <= l <= 8'. Keys smaller than 768 bits are not
-     considered secure, so you should probably stick to 1024.
-     Non-standard sizes are possible, in particular sizes larger than
-     1024 bits, although DSA implementations can not in general be
+     P_BITS and Q_BITS are the desired sizes of `p' and `q'. To
+     generate keys that conform to the original DSA standard, you must
+     use `q_bits = 160' and select P_BITS of the form `p_bits = 512 +
+     l*64', for `0 <= l <= 8', where the smaller sizes are no longer
+     recommended, so you should most likely stick to `p_bits = 1024'.
+     Non-standard sizes are possible, in particular `p_bits' larger
+     than 1024, although DSA implementations can not in general be
      expected to support such keys. Also note that using very large
-     keys doesn't make much sense, because the security is also limited
-     by the size of the smaller prime `q', which is always 160 bits.
+     P_BITS, with Q_BITS fixed at 160, doesn't make much sense, because
+     the security is also limited by the size of the smaller prime.
+     Using a larger `q_bits' requires switchign to a larger hash
+     function. To generate DSA keys for use with SHA256, use `q_bits =
+     256' and, e.g., `p_bits = 2048'.
 
-     Returns 1 on success, and 0 on failure. The function will fail if
-     BITS is too small.
+     Returns one on success, and zero on failure. The function will
+     fail if Q_BITS is neither 160 nor 256, or if P_BITS is unreasonably
+     small.
 
 
 File: nettle.info,  Node: Randomness,  Next: Miscellaneous functions,  Prev: Public-key algorithms,  Up: Reference
 
-Randomness
-==========
+6.6 Randomness
+==============
 
 A crucial ingredient in many cryptographic contexts is randomness: Let
 `p' be a random prime, choose a random initialization vector `iv', a
@@ -2051,13 +2633,13 @@ from a small seed.
 
    The recommended generator to use is Yarrow, described below.
 
-Yarrow
-------
+6.6.1 Yarrow
+------------
 
 Yarrow is a family of pseudo-randomness generators, designed for
 cryptographic use, by John Kelsey, Bruce Schneier and Niels Ferguson.
 Yarrow-160 is described in a paper at
-<http://www.counterpane.com/yarrow.html>, and it uses SHA1 and
+`http://www.counterpane.com/yarrow.html', and it uses SHA1 and
 triple-DES, and has a 160-bit internal state. Nettle implements
 Yarrow-256, which is similar, but uses SHA256 and AES to get an
 internal state of 256 bits.
@@ -2090,21 +2672,21 @@ file, or feeding it input from its sources until a slow reseed happens.
 
    Nettle defines Yarrow-256 in `<nettle/yarrow.h>'.
 
- - Context struct: struct yarrow256_ctx
+ -- Context struct: struct yarrow256_ctx
 
- - Context struct: struct yarrow_source
+ -- Context struct: struct yarrow_source
      Information about a single source.
 
- - Constant: YARROW256_SEED_FILE_SIZE
+ -- Constant: YARROW256_SEED_FILE_SIZE
      Recommanded size of the Yarrow-256 seed file.
 
- - Function: void yarrow256_init (struct yarrow256_ctx *CTX, unsigned
+ -- Function: void yarrow256_init (struct yarrow256_ctx *CTX, unsigned
           NSOURCES, struct yarrow_source *SOURCES)
      Initializes the yarrow context, and its NSOURCES sources. It's
      possible to call it with NSOURCES=0 and SOURCES=NULL, if you don't
      need the update features.
 
- - Function: void yarrow256_seed (struct yarrow256_ctx *CTX, unsigned
+ -- Function: void yarrow256_seed (struct yarrow256_ctx *CTX, unsigned
           LENGTH, uint8_t *SEED_FILE)
      Seeds Yarrow-256 from a previous seed file. LENGTH should be at
      least `YARROW256_SEED_FILE_SIZE', but it can be larger.
@@ -2116,7 +2698,7 @@ file, or feeding it input from its sources until a slow reseed happens.
      about the same time, access must be coordinated using some locking
      mechanism.
 
- - Function: int yarrow256_update (struct yarrow256_ctx *CTX, unsigned
+ -- Function: int yarrow256_update (struct yarrow256_ctx *CTX, unsigned
           SOURCE, unsigned ENTROPY, unsigned LENGTH, const uint8_t
           *DATA)
      Updates the generator with data from source SOURCE (an index that
@@ -2130,8 +2712,8 @@ file, or feeding it input from its sources until a slow reseed happens.
      `yarrow256_random' and overwrite the seed file. Otherwise, the
      function returns 0.
 
- - Function: void yarrow256_random (struct yarrow256_ctx *CTX, unsigned
-          LENGTH, uint8_t *DST)
+ -- Function: void yarrow256_random (struct yarrow256_ctx *CTX,
+          unsigned LENGTH, uint8_t *DST)
      Generates LENGTH octets of output. The generator must be seeded
      before you call this function.
 
@@ -2140,32 +2722,32 @@ file, or feeding it input from its sources until a slow reseed happens.
      efficiency by buffering, calling this function for reasonably large
      blocks of data, say 100-1000 octets at a time.
 
- - Function: int yarrow256_is_seeded (struct yarrow256_ctx *CTX)
+ -- Function: int yarrow256_is_seeded (struct yarrow256_ctx *CTX)
      Returns 1 if the generator is seeded and ready to generate output,
      otherwise 0.
 
- - Function: unsigned yarrow256_needed_sources (struct yarrow256_ctx
+ -- Function: unsigned yarrow256_needed_sources (struct yarrow256_ctx
           *CTX)
      Returns the number of sources that must reach the threshold before
      a slow reseed will happen. Useful primarily when the generator is
      unseeded.
 
- - Function: void yarrow256_fast_reseed (struct yarrow256_ctx *CTX)
- - Function: void yarrow256_slow_reseed (struct yarrow256_ctx *CTX)
+ -- Function: void yarrow256_fast_reseed (struct yarrow256_ctx *CTX)
+ -- Function: void yarrow256_slow_reseed (struct yarrow256_ctx *CTX)
      Causes a fast or slow reseed to take place immediately, regardless
      of the current entropy estimates of the two pools. Use with care.
 
    Nettle includes an entropy estimator for one kind of input source:
 User keyboard input.
 
- - Context struct: struct yarrow_key_event_ctx
+ -- Context struct: struct yarrow_key_event_ctx
      Information about recent key events.
 
- - Function: void yarrow_key_event_init (struct yarrow_key_event_ctx
+ -- Function: void yarrow_key_event_init (struct yarrow_key_event_ctx
           *CTX)
      Initializes the context.
 
- - Function: unsigned yarrow_key_event_estimate (struct
+ -- Function: unsigned yarrow_key_event_estimate (struct
           yarrow_key_event_ctx *CTX, unsigned KEY, unsigned TIME)
      KEY is the id of the key (ASCII value, hardware key code, X
      keysym, ..., it doesn't matter), and TIME is the timestamp of the
@@ -2182,11 +2764,11 @@ User keyboard input.
 
 File: nettle.info,  Node: Miscellaneous functions,  Next: Compatibility functions,  Prev: Randomness,  Up: Reference
 
-Miscellaneous functions
-=======================
+6.7 Miscellaneous functions
+===========================
 
- - Function: uint8_t * memxor (uint8_t *DST, const uint8_t *SRC, size_t
-          N)
+ -- Function: uint8_t * memxor (uint8_t *DST, const uint8_t *SRC,
+          size_t N)
      XORs the source area on top of the destination area. The interface
      doesn't follow the Nettle conventions, because it is intended to be
      similar to the ANSI-C `memcpy' function.
@@ -2196,8 +2778,8 @@ Miscellaneous functions
 
 File: nettle.info,  Node: Compatibility functions,  Prev: Miscellaneous functions,  Up: Reference
 
-Compatibility functions
-=======================
+6.8 Compatibility functions
+===========================
 
 For convenience, Nettle includes alternative interfaces to some
 algorithms, for compatibility with some other popular crypto toolkits.
@@ -2222,8 +2804,8 @@ the functions `des_cbc_cksum' `des_cbc_encrypt', `des_ecb2_encrypt',
 
 File: nettle.info,  Node: Nettle soup,  Next: Installation,  Prev: Reference,  Up: Top
 
-Traditional Nettle Soup
-***********************
+7 Traditional Nettle Soup
+*************************
 
 For the serious nettle hacker, here is a recipe for nettle soup. 4
 servings.
@@ -2257,8 +2839,8 @@ for a few minutes.  Season with salt and pepper.
 
 File: nettle.info,  Node: Installation,  Next: Index,  Prev: Nettle soup,  Up: Top
 
-Installation
-************
+8 Installation
+**************
 
 Nettle uses `autoconf'. To build it, unpack the source and run
 
@@ -2287,163 +2869,252 @@ File: nettle.info,  Node: Index,  Prev: Installation,  Up: Top
 Function and Concept Index
 **************************
 
+ [index ]
 * Menu:
 
-* aes_decrypt:                           Cipher functions.
-* aes_encrypt:                           Cipher functions.
-* aes_set_decrypt_key:                   Cipher functions.
-* aes_set_encrypt_key:                   Cipher functions.
-* arcfour_crypt:                         Cipher functions.
-* arcfour_set_key:                       Cipher functions.
-* arctwo_decrypt:                        Cipher functions.
-* arctwo_encrypt:                        Cipher functions.
-* arctwo_set_key:                        Cipher functions.
-* arctwo_set_key_ekb:                    Cipher functions.
-* arctwo_set_key_gutmann:                Cipher functions.
-* Block Cipher:                          Cipher functions.
-* blowfish_decrypt:                      Cipher functions.
-* blowfish_encrypt:                      Cipher functions.
-* blowfish_set_key:                      Cipher functions.
-* cast128_decrypt:                       Cipher functions.
-* cast128_encrypt:                       Cipher functions.
-* cast128_set_key:                       Cipher functions.
-* CBC Mode:                              Cipher modes.
-* CBC_CTX:                               Cipher modes.
-* CBC_DECRYPT:                           Cipher modes.
-* cbc_decrypt:                           Cipher modes.
-* CBC_ENCRYPT:                           Cipher modes.
-* cbc_encrypt:                           Cipher modes.
-* CBC_SET_IV:                            Cipher modes.
-* Cipher:                                Cipher functions.
-* Cipher Block Chaining:                 Cipher modes.
-* Collision-resistant:                   Hash functions.
-* Conditional entropy:                   Randomness.
-* Counter Mode:                          Cipher modes.
-* CTR Mode:                              Cipher modes.
-* CTR_CRYPT:                             Cipher modes.
-* ctr_crypt:                             Cipher modes.
-* CTR_CTX:                               Cipher modes.
-* CTR_SET_COUNTER:                       Cipher modes.
-* des3_decrypt:                          Cipher functions.
-* des3_encrypt:                          Cipher functions.
-* des3_set_key:                          Cipher functions.
-* des_decrypt:                           Cipher functions.
-* des_encrypt:                           Cipher functions.
-* des_fix_parity:                        Cipher functions.
-* des_set_key:                           Cipher functions.
-* dsa_generate_keypair:                  DSA.
-* dsa_private_key_clear:                 DSA.
-* dsa_private_key_init:                  DSA.
-* dsa_public_key_clear:                  DSA.
-* dsa_public_key_init:                   DSA.
-* dsa_sign:                              DSA.
-* dsa_sign_digest:                       DSA.
-* dsa_signature_clear:                   DSA.
-* dsa_signature_init:                    DSA.
-* dsa_verify:                            DSA.
-* dsa_verify_digest:                     DSA.
-* Entropy:                               Randomness.
-* Hash function:                         Hash functions.
+* aes_decrypt:                           Cipher functions.    (line 123)
+* aes_encrypt:                           Cipher functions.    (line 116)
+* aes_invert_key:                        Cipher functions.    (line 105)
+* aes_set_decrypt_key:                   Cipher functions.    (line 101)
+* aes_set_encrypt_key:                   Cipher functions.    (line  99)
+* arcfour_crypt:                         Cipher functions.    (line 175)
+* arcfour_set_key:                       Cipher functions.    (line 170)
+* arctwo_decrypt:                        Cipher functions.    (line 240)
+* arctwo_encrypt:                        Cipher functions.    (line 233)
+* arctwo_set_key:                        Cipher functions.    (line 217)
+* arctwo_set_key_ekb:                    Cipher functions.    (line 215)
+* arctwo_set_key_gutmann:                Cipher functions.    (line 219)
+* Block Cipher:                          Cipher functions.    (line  12)
+* blowfish_decrypt:                      Cipher functions.    (line 282)
+* blowfish_encrypt:                      Cipher functions.    (line 275)
+* blowfish_set_key:                      Cipher functions.    (line 265)
+* camellia_crypt:                        Cipher functions.    (line 332)
+* camellia_invert_key:                   Cipher functions.    (line 321)
+* camellia_set_decrypt_key:              Cipher functions.    (line 317)
+* camellia_set_encrypt_key:              Cipher functions.    (line 315)
+* cast128_decrypt:                       Cipher functions.    (line 372)
+* cast128_encrypt:                       Cipher functions.    (line 365)
+* cast128_set_key:                       Cipher functions.    (line 360)
+* CBC Mode:                              CBC.                 (line   6)
+* CBC_CTX:                               CBC.                 (line  51)
+* CBC_DECRYPT:                           CBC.                 (line  72)
+* cbc_decrypt:                           CBC.                 (line  37)
+* CBC_ENCRYPT:                           CBC.                 (line  71)
+* cbc_encrypt:                           CBC.                 (line  34)
+* CBC_SET_IV:                            CBC.                 (line  66)
+* Cipher:                                Cipher functions.    (line   6)
+* Cipher Block Chaining:                 CBC.                 (line   6)
+* Collision-resistant:                   Hash functions.      (line  18)
+* Conditional entropy:                   Randomness.          (line  51)
+* Counter Mode:                          CTR.                 (line   6)
+* CTR Mode:                              CTR.                 (line   6)
+* CTR_CRYPT:                             CTR.                 (line  60)
+* ctr_crypt:                             CTR.                 (line  36)
+* CTR_CTX:                               CTR.                 (line  48)
+* CTR_SET_COUNTER:                       CTR.                 (line  55)
+* des3_decrypt:                          Cipher functions.    (line 494)
+* des3_encrypt:                          Cipher functions.    (line 487)
+* des3_set_key:                          Cipher functions.    (line 476)
+* des_check_parity:                      Cipher functions.    (line 420)
+* des_decrypt:                           Cipher functions.    (line 416)
+* des_encrypt:                           Cipher functions.    (line 409)
+* des_fix_parity:                        Cipher functions.    (line 425)
+* des_set_key:                           Cipher functions.    (line 401)
+* dsa_generate_keypair:                  DSA.                 (line 210)
+* dsa_private_key_clear:                 DSA.                 (line 142)
+* dsa_private_key_init:                  DSA.                 (line 135)
+* dsa_public_key_clear:                  DSA.                 (line 141)
+* dsa_public_key_init:                   DSA.                 (line 134)
+* dsa_sha1_sign:                         DSA.                 (line 166)
+* dsa_sha1_sign_digest:                  DSA.                 (line 170)
+* dsa_sha1_verify:                       DSA.                 (line 190)
+* dsa_sha1_verify_digest:                DSA.                 (line 193)
+* dsa_sha256_sign:                       DSA.                 (line 174)
+* dsa_sha256_sign_digest:                DSA.                 (line 178)
+* dsa_sha256_verify:                     DSA.                 (line 196)
+* dsa_sha256_verify_digest:              DSA.                 (line 199)
+* dsa_signature_clear:                   DSA.                 (line 151)
+* dsa_signature_init:                    DSA.                 (line 150)
+* Entropy:                               Randomness.          (line  51)
+* Galois Counter Mode:                   GCM.                 (line   6)
+* GCM:                                   GCM.                 (line   6)
+* gcm_aes_decrypt:                       GCM.                 (line 167)
+* gcm_aes_digest:                        GCM.                 (line 174)
+* gcm_aes_encrypt:                       GCM.                 (line 165)
+* gcm_aes_set_iv:                        GCM.                 (line 154)
+* gcm_aes_set_key:                       GCM.                 (line 149)
+* gcm_aes_update:                        GCM.                 (line 158)
+* GCM_CTX:                               GCM.                 (line 102)
+* GCM_DECRYPT:                           GCM.                 (line 132)
+* gcm_decrypt:                           GCM.                 (line  74)
+* GCM_DIGEST:                            GCM.                 (line 133)
+* gcm_digest:                            GCM.                 (line  82)
+* GCM_ENCRYPT:                           GCM.                 (line 131)
+* gcm_encrypt:                           GCM.                 (line  71)
+* GCM_SET_IV:                            GCM.                 (line 123)
+* gcm_set_iv:                            GCM.                 (line  58)
+* GCM_SET_KEY:                           GCM.                 (line 117)
+* gcm_set_key:                           GCM.                 (line  52)
+* GCM_UPDATE:                            GCM.                 (line 127)
+* gcm_update:                            GCM.                 (line  63)
+* Hash function:                         Hash functions.      (line   6)
 * HMAC_CTX:                              Keyed hash functions.
+                                                              (line  88)
 * HMAC_DIGEST:                           Keyed hash functions.
+                                                              (line 110)
 * hmac_digest:                           Keyed hash functions.
+                                                              (line  76)
 * hmac_md5_digest:                       Keyed hash functions.
+                                                              (line 140)
 * hmac_md5_set_key:                      Keyed hash functions.
+                                                              (line 132)
 * hmac_md5_update:                       Keyed hash functions.
+                                                              (line 136)
+* hmac_ripemd160_digest:                 Keyed hash functions.
+                                                              (line 162)
+* hmac_ripemd160_set_key:                Keyed hash functions.
+                                                              (line 154)
+* hmac_ripemd160_update:                 Keyed hash functions.
+                                                              (line 158)
 * HMAC_SET_KEY:                          Keyed hash functions.
+                                                              (line 104)
 * hmac_set_key:                          Keyed hash functions.
+                                                              (line  61)
 * hmac_sha1_digest:                      Keyed hash functions.
+                                                              (line 184)
 * hmac_sha1_set_key:                     Keyed hash functions.
+                                                              (line 176)
 * hmac_sha1_update:                      Keyed hash functions.
+                                                              (line 180)
 * hmac_sha256_digest:                    Keyed hash functions.
+                                                              (line 206)
 * hmac_sha256_set_key:                   Keyed hash functions.
+                                                              (line 198)
 * hmac_sha256_update:                    Keyed hash functions.
+                                                              (line 202)
+* hmac_sha512_digest:                    Keyed hash functions.
+                                                              (line 228)
+* hmac_sha512_set_key:                   Keyed hash functions.
+                                                              (line 220)
+* hmac_sha512_update:                    Keyed hash functions.
+                                                              (line 224)
 * hmac_update:                           Keyed hash functions.
+                                                              (line  68)
 * Keyed Hash Function:                   Keyed hash functions.
+                                                              (line   6)
 * MAC:                                   Keyed hash functions.
-* md2_digest:                            Hash functions.
-* md2_init:                              Hash functions.
-* md2_update:                            Hash functions.
-* md4_digest:                            Hash functions.
-* md4_init:                              Hash functions.
-* md4_update:                            Hash functions.
-* md5_digest:                            Hash functions.
-* md5_init:                              Hash functions.
-* md5_update:                            Hash functions.
+                                                              (line   6)
+* md2_digest:                            Hash functions.      (line  96)
+* md2_init:                              Hash functions.      (line  88)
+* md2_update:                            Hash functions.      (line  92)
+* md4_digest:                            Hash functions.      (line 129)
+* md4_init:                              Hash functions.      (line 121)
+* md4_update:                            Hash functions.      (line 125)
+* md5_digest:                            Hash functions.      (line  58)
+* md5_init:                              Hash functions.      (line  50)
+* md5_update:                            Hash functions.      (line  54)
 * memxor:                                Miscellaneous functions.
+                                                              (line   8)
 * Message Authentication Code:           Keyed hash functions.
-* One-way:                               Hash functions.
+                                                              (line   6)
+* One-way:                               Hash functions.      (line  14)
 * One-way function:                      Public-key algorithms.
+                                                              (line  18)
 * Public Key Cryptography:               Public-key algorithms.
-* Randomness:                            Randomness.
-* rsa_compute_root:                      RSA.
-* rsa_generate_keypair:                  RSA.
-* rsa_md5_sign:                          RSA.
-* rsa_md5_sign_digest:                   RSA.
-* rsa_md5_verify:                        RSA.
-* rsa_md5_verify_digest:                 RSA.
-* rsa_private_key_clear:                 RSA.
-* rsa_private_key_init:                  RSA.
-* rsa_private_key_prepare:               RSA.
-* rsa_public_key_clear:                  RSA.
-* rsa_public_key_init:                   RSA.
-* rsa_public_key_prepare:                RSA.
-* rsa_sha1_sign:                         RSA.
-* rsa_sha1_sign_digest:                  RSA.
-* rsa_sha1_verify:                       RSA.
-* rsa_sha1_verify_digest:                RSA.
-* rsa_sha256_sign:                       RSA.
-* rsa_sha256_sign_digest:                RSA.
-* rsa_sha256_verify:                     RSA.
-* rsa_sha256_verify_digest:              RSA.
-* serpent_decrypt:                       Cipher functions.
-* serpent_encrypt:                       Cipher functions.
-* serpent_set_key:                       Cipher functions.
-* sha1_digest:                           Hash functions.
-* sha1_init:                             Hash functions.
-* sha1_update:                           Hash functions.
-* sha256_digest:                         Hash functions.
-* sha256_init:                           Hash functions.
-* sha256_update:                         Hash functions.
-* Stream Cipher:                         Cipher functions.
-* twofish_decrypt:                       Cipher functions.
-* twofish_encrypt:                       Cipher functions.
-* twofish_set_key:                       Cipher functions.
-* yarrow256_fast_reseed:                 Randomness.
-* yarrow256_init:                        Randomness.
-* yarrow256_is_seeded:                   Randomness.
-* yarrow256_needed_sources:              Randomness.
-* yarrow256_random:                      Randomness.
-* yarrow256_seed:                        Randomness.
-* yarrow256_slow_reseed:                 Randomness.
-* yarrow256_update:                      Randomness.
-* yarrow_key_event_estimate:             Randomness.
-* yarrow_key_event_init:                 Randomness.
+                                                              (line  18)
+* Randomness:                            Randomness.          (line   6)
+* ripemd160_digest:                      Hash functions.      (line 162)
+* ripemd160_init:                        Hash functions.      (line 154)
+* ripemd160_update:                      Hash functions.      (line 158)
+* rsa_compute_root:                      RSA.                 (line 187)
+* rsa_generate_keypair:                  RSA.                 (line 196)
+* rsa_md5_sign:                          RSA.                 (line 130)
+* rsa_md5_sign_digest:                   RSA.                 (line 145)
+* rsa_md5_verify:                        RSA.                 (line 159)
+* rsa_md5_verify_digest:                 RSA.                 (line 171)
+* rsa_private_key_clear:                 RSA.                 (line  96)
+* rsa_private_key_init:                  RSA.                 (line  89)
+* rsa_private_key_prepare:               RSA.                 (line 109)
+* rsa_public_key_clear:                  RSA.                 (line  95)
+* rsa_public_key_init:                   RSA.                 (line  88)
+* rsa_public_key_prepare:                RSA.                 (line 108)
+* rsa_sha1_sign:                         RSA.                 (line 132)
+* rsa_sha1_sign_digest:                  RSA.                 (line 147)
+* rsa_sha1_verify:                       RSA.                 (line 161)
+* rsa_sha1_verify_digest:                RSA.                 (line 173)
+* rsa_sha256_sign:                       RSA.                 (line 134)
+* rsa_sha256_sign_digest:                RSA.                 (line 149)
+* rsa_sha256_verify:                     RSA.                 (line 163)
+* rsa_sha256_verify_digest:              RSA.                 (line 175)
+* rsa_sha512_sign:                       RSA.                 (line 136)
+* rsa_sha512_sign_digest:                RSA.                 (line 151)
+* rsa_sha512_verify:                     RSA.                 (line 165)
+* rsa_sha512_verify_digest:              RSA.                 (line 177)
+* serpent_decrypt:                       Cipher functions.    (line 533)
+* serpent_encrypt:                       Cipher functions.    (line 526)
+* serpent_set_key:                       Cipher functions.    (line 521)
+* sha1_digest:                           Hash functions.      (line 197)
+* sha1_init:                             Hash functions.      (line 189)
+* sha1_update:                           Hash functions.      (line 193)
+* sha224_digest:                         Hash functions.      (line 265)
+* sha224_init:                           Hash functions.      (line 257)
+* sha224_update:                         Hash functions.      (line 261)
+* sha256_digest:                         Hash functions.      (line 231)
+* sha256_init:                           Hash functions.      (line 223)
+* sha256_update:                         Hash functions.      (line 227)
+* sha384_digest:                         Hash functions.      (line 335)
+* sha384_init:                           Hash functions.      (line 327)
+* sha384_update:                         Hash functions.      (line 331)
+* sha512_digest:                         Hash functions.      (line 301)
+* sha512_init:                           Hash functions.      (line 293)
+* sha512_update:                         Hash functions.      (line 297)
+* Stream Cipher:                         Cipher functions.    (line  12)
+* twofish_decrypt:                       Cipher functions.    (line 569)
+* twofish_encrypt:                       Cipher functions.    (line 562)
+* twofish_set_key:                       Cipher functions.    (line 557)
+* yarrow256_fast_reseed:                 Randomness.          (line 277)
+* yarrow256_init:                        Randomness.          (line 226)
+* yarrow256_is_seeded:                   Randomness.          (line 267)
+* yarrow256_needed_sources:              Randomness.          (line 272)
+* yarrow256_random:                      Randomness.          (line 258)
+* yarrow256_seed:                        Randomness.          (line 232)
+* yarrow256_slow_reseed:                 Randomness.          (line 278)
+* yarrow256_update:                      Randomness.          (line 245)
+* yarrow_key_event_estimate:             Randomness.          (line 293)
+* yarrow_key_event_init:                 Randomness.          (line 289)
 
 
 
 Tag Table:
-Node: Top544
-Node: Introduction1656
-Node: Copyright3218
-Node: Conventions6662
-Node: Example8464
-Node: Linking9756
-Node: Reference10401
-Node: Hash functions10765
-Node: Cipher functions18689
-Node: Cipher modes40576
-Node: Keyed hash functions46918
-Node: Public-key algorithms54569
-Node: RSA58481
-Node: RSA-Footnotes68065
-Ref: RSA-Footnote-168118
-Node: DSA68287
-Node: Randomness75900
-Node: Miscellaneous functions90979
-Node: Compatibility functions91474
-Node: Nettle soup92711
-Node: Installation93700
-Node: Index94543
+Node: Top542
+Node: Introduction2138
+Node: Copyright3704
+Node: Conventions7439
+Node: Example9401
+Node: Linking10648
+Node: Reference11481
+Node: Hash functions11849
+Node: Cipher functions25050
+Node: Cipher modes50940
+Node: CBC51968
+Node: CTR55242
+Node: GCM57768
+Node: Keyed hash functions65329
+Node: Public-key algorithms74686
+Node: RSA78606
+Node: RSA-Footnotes89220
+Ref: RSA-Footnote-189273
+Node: DSA89442
+Node: Randomness100785
+Node: Miscellaneous functions115898
+Node: Compatibility functions116402
+Node: Nettle soup117647
+Node: Installation118640
+Node: Index119487
 
 End Tag Table
+
+
+Local Variables:
+coding: iso-8859-1
+End:

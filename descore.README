@@ -17,7 +17,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 Author's address: how@isl.stanford.edu
 
-$Id: descore.README,v 1.1 2007/04/05 14:20:35 nisse Exp $
+$Id: descore.README,v 1.1 2007-04-05 14:20:35 nisse Exp $
 
 
 ==>> To compile after untarring/unsharring, just `make' <<==

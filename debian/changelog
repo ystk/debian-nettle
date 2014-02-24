@@ -1,3 +1,92 @@
+nettle (2.4-3) unstable; urgency=high
+
+  * Add postinst script that replaces old documentation directory (from
+    before 1.15-4) in nettle-bin with symlink (Closes: #692950).
+  * Spell check package descriptions (Closes: #680627). Thanks to Filipus
+    Klutiero.
+
+ -- Magnus Holmgren <holmgren@debian.org>  Fri, 16 Nov 2012 21:13:25 +0100
+
+nettle (2.4-2) unstable; urgency=low
+
+  * Drop README.source; not needed since the package was converted to
+    format 3.0.
+  * Correct errors in DEP 5-format debian/copyright.
+  * Use dpkg-buildflags to set CFLAGS et al.
+  * Bump Standards-Version to 3.9.3.
+
+ -- Magnus Holmgren <holmgren@debian.org>  Sat, 23 Jun 2012 14:41:45 +0200
+
+nettle (2.4-1) unstable; urgency=low
+
+  * New upstream bugfix release.
+
+ -- Magnus Holmgren <holmgren@debian.org>  Sat, 03 Sep 2011 17:59:01 +0200
+
+nettle (2.3-1) unstable; urgency=low
+
+  * New upstream release.
+  * nettle-dev.install: Include pkg-config files added by upstream
+    (Closes: #634294).
+  * debian/copyright: Add ripemd160-related files.
+
+ -- Magnus Holmgren <holmgren@debian.org>  Sat, 03 Sep 2011 00:48:54 +0200
+
+nettle (2.2-1) unstable; urgency=low
+
+  * New upstream release (Closes: #633574).
+    - The function nettle_arcfour_stream() was dropped without changing
+      the SONAME, because it was undocumented and untested and should not
+      be in use.
+  * Add symbols files and correct dependencies in shlibs files.
+  * Update copyright information, in particular regarding blowfish and
+    serpent, trying to follow DEP5.
+  * Add manpage nettle-hash(1) and mention nettle-hash in description of
+    nettle-bin.
+  * Add multi-arch support.
+  * Bump Standards-Version to 3.9.2.
+  * Switch to Debhelper compat level 8.
+  * nettle-bin: Change Conflicts from moving sexp-conv into
+    Breaks+Replaces and drop long-obsolete conflict with libnettle1.
+  * Improve libnettle and libhogweed package descriptions, explaining the
+    difference between them.
+
+ -- Magnus Holmgren <holmgren@debian.org>  Sat, 06 Aug 2011 19:13:56 +0200
+
+nettle (2.1-2) unstable; urgency=low
+
+  * Upload to unstable.
+  * Increase Debhelper compat level to 7.
+  * debian/rules: Add build-indep and build-arch targets.
+  * debian/copyright: Add entry for dsa2sexp.c.
+  * No longer suggest lsh-utils-doc as an alternative to lsh-doc.
+
+ -- Magnus Holmgren <holmgren@debian.org>  Sun, 20 Mar 2011 01:48:24 +0100
+
+nettle (2.1-1) experimental; urgency=low
+
+  * New upstream release (Closes: #594386). Thanks to Sedat Dilek for
+    sorting things out.
+    - Drop rsa2sexp_algorithm_name.dpatch, 20_link_with_gmp.dpatch;
+      incorporated upstream.
+    - The SOVERSIONs of libnettle and libhogweed have changed to 4 and 2,
+      respectively; update and rename debian/control, debian/libnettle3.*,
+      debian/libhogweed1.*, and debian/nettle-bin.links accordingly.
+  * Build-depend on the new libgmp10-dev instead of libgmp3-dev.
+  * Convert to source package format 3.0 (quilt), using
+    dh_autotools-dev_*config to update config.sub and config.guess files.
+  * Handle the parallel DEB_BUILD_OPTIONS option.
+  * Pass --libdir=/usr/lib to ./configure since it will otherwise try to
+    be smart and pick /usr/lib32 or /usr/lib64 on certain platforms.
+  * General tidying of debian/rules: 
+    - Remove handling of noopt option (dpkg-buildpackage sets CFLAGS).
+    - Remove remnants of nostrip option handling.
+    - Only pass --host to ./configure if HOST != BUILD, as is recommended.
+    - Remove redundant compiler and configure flags.
+  * Bump Standards-Version to 3.9.1.
+
+ -- Magnus Holmgren <holmgren@debian.org>  Tue, 18 Jan 2011 23:44:49 +0100
+
 nettle (2.0-2) unstable; urgency=low
 
   * rsa2sexp_algorithm_name.dpatch (new): Use a default algorithm name

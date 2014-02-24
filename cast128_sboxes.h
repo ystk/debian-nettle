@@ -1,5 +1,5 @@
 /*
- * $Id: cast128_sboxes.h,v 1.1 2007/04/05 14:20:35 nisse Exp $
+ * $Id: cast128_sboxes.h,v 1.1 2007-04-05 14:20:35 nisse Exp $
  *
  *	CAST-128 in C
  *	Written by Steve Reid <sreid@sea-to-sky.net>

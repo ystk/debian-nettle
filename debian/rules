@@ -5,37 +5,34 @@
 
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
-include /usr/share/dpatch/dpatch.make
 
 # These are used for cross-compiling and for saving the configure script
 # from having to guess our platform (since we know it already)
 DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+DEB_HOST_MULTIARCH  ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH) 
 
-
-CFLAGS = -Wall -g
-LDFLAGS = -Wl,--as-needed
-
-ifneq (,$(filter noopt,$(DEB_BUILD_OPTIONS)))
-	CFLAGS += -O0
+ifeq ($(DEB_BUILD_GNU_TYPE), $(DEB_HOST_GNU_TYPE))
+  buildflags = --build=$(DEB_BUILD_GNU_TYPE)
 else
-	CFLAGS += -O2
-endif
-ifeq (,$(filter nostrip,$(DEB_BUILD_OPTIONS)))
-	INSTALL_PROGRAM += -s
+  buildflags = --build=$(DEB_BUILD_GNU_TYPE) --host=$(DEB_HOST_GNU_TYPE)
 endif
 
-config.status: ${DPATCH_STAMPFN} configure
+parallel = $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+ifneq (,$(parallel))
+jobsflag = -j$(parallel)
+endif
+
+config.status: configure
 	dh_testdir
 	# Add here commands to configure the package.
-	./configure --host=$(DEB_HOST_GNU_TYPE) \
-		    --build=$(DEB_BUILD_GNU_TYPE) \
+	dh_autotools-dev_updateconfig
+	./configure $(buildflags) \
 		    --prefix=/usr \
-	            --mandir=\$${prefix}/share/man \
-	            --infodir=\$${prefix}/share/info \
+		    --libdir=\$${prefix}/lib/$(DEB_HOST_MULTIARCH) \
 	            --enable-shared \
 	            --disable-dependency-tracking \
-	            CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+	            $(shell DEB_LDFLAGS_MAINT_APPEND=-Wl,--as-needed dpkg-buildflags --export=configure)
 
 
 build: build-stamp
@@ -43,39 +40,40 @@ build-stamp:  config.status
 	dh_testdir
 
 	# Add here commands to compile the package.
-	$(MAKE) MAKEINFO='makeinfo --enable-encoding'
+	$(MAKE) $(jobsflag) MAKEINFO='makeinfo --enable-encoding'
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 	$(MAKE) check
 endif
 
 	touch build-stamp
 
-clean: clean-patched unpatch
-	dh_clean
-
-clean-patched:
+clean:
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp 
 
 	# Add here commands to clean up after the build process.
 	[ ! -f Makefile ] || $(MAKE) distclean
+	dh_autotools-dev_restoreconfig
+	dh_clean
 
 install: build
 	dh_testdir
 	dh_testroot
-	dh_clean -k 
+	dh_prep
 	dh_installdirs
 
 	# Add here commands to install the package into debian/tmp
 	$(MAKE) install DESTDIR=$(CURDIR)/debian/tmp
 
 # Build architecture-independent files here.
+build-indep:
 binary-indep:
 # Nothing to do
 
 # Build architecture-dependent files here.
-binary-arch: build install
+build-arch: build
+binary-arch: build-arch install
 	dh_testdir
 	dh_testroot
 	dh_install -a --sourcedir=debian/tmp
@@ -88,7 +86,7 @@ binary-arch: build install
 	dh_strip -a --dbg-package=nettle-dbg
 	dh_compress -a -X.pdf
 	dh_fixperms -a
-	dh_makeshlibs #-V 'libnettle2 (>= 1.15)'
+	dh_makeshlibs -a -V
 	dh_installdeb -a
 	dh_shlibdeps -a
 	dh_gencontrol -a
@@ -96,4 +94,4 @@ binary-arch: build install
 	dh_builddeb -a
 
 binary: binary-arch
-.PHONY: build clean clean-patched binary-indep binary-arch binary install
+.PHONY: build build-indep build-arch clean clean-patched binary-indep binary-arch binary install

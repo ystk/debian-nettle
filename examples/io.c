@@ -88,8 +88,13 @@ read_file(const char *name, unsigned max_size, char **contents)
     size = max_size;
   else
     size = 100;
-  
-  for (size = 100, done = 0;
+
+  /* FIXME: The use of feof and ferror in this loop is a bit confused
+     (but I think it is still correct). We should check the return
+     value of fread, and call feof and/or ferror when we get a short
+     item count. */	
+
+  for (done = 0;
        (!max_size || done < max_size) && !feof(f);
        size *= 2)
     {
@@ -166,6 +171,8 @@ simple_random(struct yarrow256_ctx *ctx, const char *name)
     return 0;
 
   yarrow256_seed(ctx, length, buffer);
+
+  free(buffer);
 
   return 1;
 }

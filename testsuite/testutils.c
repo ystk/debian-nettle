@@ -5,6 +5,7 @@
 #include "cbc.h"
 #include "ctr.h"
 #include "knuth-lfib.h"
+#include "nettle-internal.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -225,8 +226,16 @@ test_cipher_cbc(const struct nettle_cipher *cipher,
 	      length, data, cleartext);
 
   if (!MEMEQ(length, data, ciphertext))
-    FAIL();
-
+    {
+      fprintf(stderr, "CBC encrypt failed:\nInput:");
+      print_hex(length, cleartext);
+      fprintf(stderr, "\nOutput: ");
+      print_hex(length, data);
+      fprintf(stderr, "\nExpected:");
+      print_hex(length, ciphertext);
+      fprintf(stderr, "\n");
+      FAIL();
+    }
   cipher->set_decrypt_key(ctx, key_length, key);
   memcpy(iv, iiv, cipher->block_size);
 
@@ -235,8 +244,16 @@ test_cipher_cbc(const struct nettle_cipher *cipher,
 	      length, data, data);
 
   if (!MEMEQ(length, data, cleartext))
-    FAIL();
-
+    {
+      fprintf(stderr, "CBC decrypt failed:\nInput:");
+      print_hex(length, ciphertext);
+      fprintf(stderr, "\nOutput: ");
+      print_hex(length, data);
+      fprintf(stderr, "\nExpected:");
+      print_hex(length, cleartext);
+      fprintf(stderr, "\n");
+      FAIL();
+    }
   free(ctx);
   free(data);
   free(iv);
@@ -263,7 +280,16 @@ test_cipher_ctr(const struct nettle_cipher *cipher,
 	    length, data, cleartext);
 
   if (!MEMEQ(length, data, ciphertext))
-    FAIL();
+    {
+      fprintf(stderr, "CTR encrypt failed:\nInput:");
+      print_hex(length, cleartext);
+      fprintf(stderr, "\nOutput: ");
+      print_hex(length, data);
+      fprintf(stderr, "\nExpected:");
+      print_hex(length, ciphertext);
+      fprintf(stderr, "\n");
+      FAIL();
+    }
 
   memcpy(ctr, ictr, cipher->block_size);
 
@@ -272,7 +298,16 @@ test_cipher_ctr(const struct nettle_cipher *cipher,
 	    length, data, data);
 
   if (!MEMEQ(length, data, cleartext))
-    FAIL();
+    {
+      fprintf(stderr, "CTR decrypt failed:\nInput:");
+      print_hex(length, ciphertext);
+      fprintf(stderr, "\nOutput: ");
+      print_hex(length, data);
+      fprintf(stderr, "\nExpected:");
+      print_hex(length, cleartext);
+      fprintf(stderr, "\n");
+      FAIL();
+    }
 
   free(ctx);
   free(data);
@@ -305,12 +340,22 @@ test_cipher_stream(const struct nettle_cipher *cipher,
 	  if (data[i + block] != 0x17)
 	    FAIL();
 	}
+
       cipher->encrypt(ctx, length - i, data + i, cleartext + i);
       if (data[length] != 0x17)
 	FAIL();
       
       if (!MEMEQ(length, data, ciphertext))
-	FAIL();
+	{
+	  fprintf(stderr, "Encrypt failed, block size %d\nInput:", block);
+	  print_hex(length, cleartext);
+	  fprintf(stderr, "\nOutput: ");
+	  print_hex(length, data);
+	  fprintf(stderr, "\nExpected:");
+	  print_hex(length, ciphertext);
+	  fprintf(stderr, "\n");
+	  FAIL();	    
+	}
     }
   
   cipher->set_decrypt_key(ctx, key_length, key);
@@ -320,10 +365,79 @@ test_cipher_stream(const struct nettle_cipher *cipher,
     FAIL();
 
   if (!MEMEQ(length, data, cleartext))
+    {
+      fprintf(stderr, "Decrypt failed\nInput:");
+      print_hex(length, ciphertext);
+      fprintf(stderr, "\nOutput: ");
+      print_hex(length, data);
+      fprintf(stderr, "\nExpected:");
+      print_hex(length, cleartext);
+      fprintf(stderr, "\n");
+      FAIL();	    
+    }
+
+  free(ctx);
+  free(data);
+}
+
+void
+test_aead(const struct nettle_aead *aead,
+	  unsigned key_length,
+	  const uint8_t *key,
+	  unsigned auth_length,
+	  const uint8_t *authtext,
+	  unsigned length,
+	  const uint8_t *cleartext,
+	  const uint8_t *ciphertext,
+	  unsigned iv_length,
+	  const uint8_t *iv,
+	  const uint8_t *digest)
+{
+  void *ctx = xalloc(aead->context_size);
+  uint8_t *data = xalloc(length);
+  uint8_t *buffer = xalloc(aead->block_size);
+
+  /* encryption */
+  memset(buffer, 0, aead->block_size);
+  aead->set_key(ctx, key_length, key);
+
+  aead->set_iv(ctx, iv_length, iv);
+
+  if (auth_length)
+    aead->update(ctx, auth_length, authtext);
+    
+  if (length)
+    aead->encrypt(ctx, length, data, cleartext);
+
+  aead->digest(ctx, aead->block_size, buffer);
+
+  if (!MEMEQ(length, data, ciphertext))
+    FAIL();
+
+  if (!MEMEQ(aead->block_size, buffer, digest))
+    FAIL();
+
+  /* decryption */
+  memset(buffer, 0, aead->block_size);
+  aead->set_iv(ctx, iv_length, iv);
+
+  if (auth_length)
+    aead->update(ctx, auth_length, authtext);
+    
+  if (length)
+    aead->decrypt(ctx, length, data, data);
+
+  aead->digest(ctx, aead->block_size, buffer);
+
+  if (!MEMEQ(length, data, cleartext))
+    FAIL();
+
+  if (!MEMEQ(aead->block_size, buffer, digest))
     FAIL();
 
   free(ctx);
   free(data);
+  free(buffer);
 }
 
 void
@@ -384,6 +498,24 @@ test_hash_large(const struct nettle_hash *hash,
   free(ctx);
   free(buffer);
   free(data);
+}
+
+void
+test_mac(const struct nettle_mac *mac,
+	 unsigned key_length, const uint8_t *key,
+	 unsigned msg_length, const uint8_t *msg,
+	 const uint8_t *digest)
+{
+  void *ctx = xalloc(mac->context_size);
+  uint8_t *buffer = xalloc(mac->digest_size);
+
+  mac->set_key(ctx, key_length, key);
+  mac->update(ctx, msg_length, msg);
+  mac->digest(ctx, mac->digest_size, buffer);
+  ASSERT(MEMEQ(mac->digest_size, digest, buffer));
+
+  free(ctx);
+  free(buffer);
 }
 
 void
@@ -450,9 +582,9 @@ mpz_togglebit (mpz_t x, unsigned long int bit)
 #endif /* HAVE_LIBGMP */
 
 #if WITH_HOGWEED
-#define SIGN(key, hash, msg, signature) do {	\
-  hash##_update(&hash, LDATA(msg));		\
-  rsa_##hash##_sign(key, &hash, signature);	\
+#define SIGN(key, hash, msg, signature) do {		\
+  hash##_update(&hash, LDATA(msg));			\
+  ASSERT(rsa_##hash##_sign(key, &hash, signature));	\
 } while(0)
 
 #define VERIFY(key, hash, msg, signature) (	\
@@ -600,8 +732,8 @@ test_rsa_md5(struct rsa_public_key *pub,
 
 void
 test_rsa_sha1(struct rsa_public_key *pub,
-	     struct rsa_private_key *key,
-	     mpz_t expected)
+	      struct rsa_private_key *key,
+	      mpz_t expected)
 {
   struct sha1_ctx sha1;
   mpz_t signature;
@@ -643,8 +775,8 @@ test_rsa_sha1(struct rsa_public_key *pub,
 
 void
 test_rsa_sha256(struct rsa_public_key *pub,
-	     struct rsa_private_key *key,
-	     mpz_t expected)
+		struct rsa_private_key *key,
+		mpz_t expected)
 {
   struct sha256_ctx sha256;
   mpz_t signature;
@@ -678,6 +810,49 @@ test_rsa_sha256(struct rsa_public_key *pub,
   mpz_togglebit(signature, 17);
 
   if (VERIFY(pub, sha256,
+	     "The magic words are squeamish ossifrage", signature))
+    FAIL();
+
+  mpz_clear(signature);
+}
+
+void
+test_rsa_sha512(struct rsa_public_key *pub,
+		struct rsa_private_key *key,
+		mpz_t expected)
+{
+  struct sha512_ctx sha512;
+  mpz_t signature;
+
+  sha512_init(&sha512);
+  mpz_init(signature);
+
+  SIGN(key, sha512, "The magic words are squeamish ossifrage", signature);
+
+  if (verbose)
+    {
+      fprintf(stderr, "rsa-sha512 signature: ");
+      mpz_out_str(stderr, 16, signature);
+      fprintf(stderr, "\n");
+    }
+
+  if (mpz_cmp(signature, expected))
+    FAIL();
+  
+  /* Try bad data */
+  if (VERIFY(pub, sha512,
+	     "The magick words are squeamish ossifrage", signature))
+    FAIL();
+
+  /* Try correct data */
+  if (!VERIFY(pub, sha512,
+	      "The magic words are squeamish ossifrage", signature))
+    FAIL();
+
+  /* Try bad signature */
+  mpz_togglebit(signature, 17);
+
+  if (VERIFY(pub, sha512,
 	     "The magic words are squeamish ossifrage", signature))
     FAIL();
 
@@ -758,14 +933,15 @@ test_rsa_key(struct rsa_public_key *pub,
   mpz_clear(tmp); mpz_clear(phi);
 }
 
-#define DSA_VERIFY(key, hash, msg, signature) (	\
-  sha1_update(hash, LDATA(msg)),		\
-  dsa_verify(key, hash, signature)		\
-)
+/* Requires that the context is named like the hash algorithm. */
+#define DSA_VERIFY(key, hash, msg, signature)	\
+  (hash##_update(&hash, LDATA(msg)),		\
+   dsa_##hash##_verify(key, &hash, signature))
 
 void
-test_dsa(const struct dsa_public_key *pub,
-	 const struct dsa_private_key *key)
+test_dsa160(const struct dsa_public_key *pub,
+	    const struct dsa_private_key *key,
+	    const struct dsa_signature *expected)
 {
   struct sha1_ctx sha1;
   struct dsa_signature signature;
@@ -776,38 +952,90 @@ test_dsa(const struct dsa_public_key *pub,
   knuth_lfib_init(&lfib, 1111);
   
   sha1_update(&sha1, LDATA("The magic words are squeamish ossifrage"));
-  dsa_sign(pub, key,
-	   &lfib, (nettle_random_func *) knuth_lfib_random,
-	   &sha1, &signature);
-  
+  ASSERT (dsa_sha1_sign(pub, key,
+			&lfib, (nettle_random_func *) knuth_lfib_random,
+			&sha1, &signature));
+
   if (verbose)
     {
-      fprintf(stderr, "dsa signature: ");
+      fprintf(stderr, "dsa160 signature: ");
       mpz_out_str(stderr, 16, signature.r);
       fprintf(stderr, ", ");
       mpz_out_str(stderr, 16, signature.s);
       fprintf(stderr, "\n");
     }
 
-#if 0
-  if (mpz_cmp(signature, expected))
-    FAIL();
-#endif
+  if (expected)
+    if (mpz_cmp (signature.r, expected->r)
+	|| mpz_cmp (signature.s, expected->s))
+      FAIL();
   
   /* Try bad data */
-  if (DSA_VERIFY(pub, &sha1,
+  if (DSA_VERIFY(pub, sha1,
 		 "The magick words are squeamish ossifrage", &signature))
     FAIL();
 
   /* Try correct data */
-  if (!DSA_VERIFY(pub, &sha1,
+  if (!DSA_VERIFY(pub, sha1,
 		 "The magic words are squeamish ossifrage", &signature))
     FAIL();
 
   /* Try bad signature */
   mpz_togglebit(signature.r, 17);
 
-  if (DSA_VERIFY(pub, &sha1,
+  if (DSA_VERIFY(pub, sha1,
+		 "The magic words are squeamish ossifrage", &signature))
+    FAIL();
+
+  dsa_signature_clear(&signature);
+}
+
+void
+test_dsa256(const struct dsa_public_key *pub,
+	    const struct dsa_private_key *key,
+	    const struct dsa_signature *expected)
+{
+  struct sha256_ctx sha256;
+  struct dsa_signature signature;
+  struct knuth_lfib_ctx lfib;
+  
+  sha256_init(&sha256);
+  dsa_signature_init(&signature);
+  knuth_lfib_init(&lfib, 1111);
+  
+  sha256_update(&sha256, LDATA("The magic words are squeamish ossifrage"));
+  ASSERT (dsa_sha256_sign(pub, key,
+			&lfib, (nettle_random_func *) knuth_lfib_random,
+			&sha256, &signature));
+  
+  if (verbose)
+    {
+      fprintf(stderr, "dsa256 signature: ");
+      mpz_out_str(stderr, 16, signature.r);
+      fprintf(stderr, ", ");
+      mpz_out_str(stderr, 16, signature.s);
+      fprintf(stderr, "\n");
+    }
+
+  if (expected)
+    if (mpz_cmp (signature.r, expected->r)
+	|| mpz_cmp (signature.s, expected->s))
+      FAIL();
+  
+  /* Try bad data */
+  if (DSA_VERIFY(pub, sha256,
+		 "The magick words are squeamish ossifrage", &signature))
+    FAIL();
+
+  /* Try correct data */
+  if (!DSA_VERIFY(pub, sha256,
+		 "The magic words are squeamish ossifrage", &signature))
+    FAIL();
+
+  /* Try bad signature */
+  mpz_togglebit(signature.r, 17);
+
+  if (DSA_VERIFY(pub, sha256,
 		 "The magic words are squeamish ossifrage", &signature))
     FAIL();
 
@@ -816,14 +1044,15 @@ test_dsa(const struct dsa_public_key *pub,
 
 void
 test_dsa_key(struct dsa_public_key *pub,
-	     struct dsa_private_key *key)
+	     struct dsa_private_key *key,
+	     unsigned q_size)
 {
   mpz_t t;
 
   mpz_init(t);
 
-  ASSERT(mpz_sizeinbase(pub->q, 2) == DSA_Q_BITS);
-  ASSERT(mpz_sizeinbase(pub->p, 2) >= DSA_MIN_P_BITS);
+  ASSERT(mpz_sizeinbase(pub->q, 2) == q_size);
+  ASSERT(mpz_sizeinbase(pub->p, 2) >= DSA_SHA1_MIN_P_BITS);
   
   ASSERT(mpz_probab_prime_p(pub->p, 10));
 

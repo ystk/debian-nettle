@@ -2,7 +2,7 @@
  *
  * Generate tables used by des.c and desCode.h.
  *
- * $Id: desdata.c,v 1.1 2007/04/05 14:20:35 nisse Exp $ */
+ * $Id: desdata.c,v 1.1 2007-04-05 14:20:35 nisse Exp $ */
 
 /*
  *	des - fast & portable DES encryption & decryption.

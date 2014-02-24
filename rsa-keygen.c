@@ -42,27 +42,6 @@
 #endif
 
 
-/* Returns a random prime of size BITS */
-static void
-bignum_random_prime(mpz_t x, unsigned bits,
-		    void *random_ctx, nettle_random_func random,
-		    void *progress_ctx, nettle_progress_func progress)
-{
-  assert(bits);
-  
-  for (;;)
-    {
-      nettle_mpz_random_size(x, random_ctx, random, bits);
-      mpz_setbit(x, bits - 1);
-
-      /* Miller-rabin count of 25 is probably much overkill. */
-      nettle_next_prime(x, x, 25, 10000, progress_ctx, progress);
-
-      if (mpz_sizeinbase(x, 2) == bits)
-	break;
-    }
-}
-
 int
 rsa_generate_keypair(struct rsa_public_key *pub,
 		     struct rsa_private_key *key,
@@ -79,7 +58,7 @@ rsa_generate_keypair(struct rsa_public_key *pub,
   if (e_size)
     {
       /* We should choose e randomly. Is the size reasonable? */
-      if ((e_size < 16) || (e_size > n_size) )
+      if ((e_size < 16) || (e_size >= n_size) )
 	return 0;
     }
   else
@@ -93,8 +72,12 @@ rsa_generate_keypair(struct rsa_public_key *pub,
       /* And 3 or larger */
       if (mpz_cmp_ui(pub->e, 3) < 0)
 	return 0;
+
+      /* And size less than n */
+      if (mpz_sizeinbase(pub->e, 2) >= n_size)
+	return 0;
     }
-  
+
   if (n_size < RSA_MINIMUM_N_BITS)
     return 0;
   
@@ -106,9 +89,10 @@ rsa_generate_keypair(struct rsa_public_key *pub,
       /* Generate p, such that gcd(p-1, e) = 1 */
       for (;;)
 	{
-	  bignum_random_prime(key->p, (n_size+1)/2,
+	  nettle_random_prime(key->p, (n_size+1)/2, 1,
 			      random_ctx, random,
 			      progress_ctx, progress);
+
 	  mpz_sub_ui(p1, key->p, 1);
       
 	  /* If e was given, we must chose p such that p-1 has no factors in
@@ -129,9 +113,14 @@ rsa_generate_keypair(struct rsa_public_key *pub,
       /* Generate q, such that gcd(q-1, e) = 1 */
       for (;;)
 	{
-	  bignum_random_prime(key->q, n_size/2,
+	  nettle_random_prime(key->q, n_size/2, 1,
 			      random_ctx, random,
 			      progress_ctx, progress);
+
+	  /* Very unlikely. */
+	  if (mpz_cmp (key->q, key->p) == 0)
+	    continue;
+
 	  mpz_sub_ui(q1, key->q, 1);
       
 	  /* If e was given, we must chose q such that q-1 has no factors in
@@ -148,26 +137,9 @@ rsa_generate_keypair(struct rsa_public_key *pub,
 
       /* Now we have the primes. Is the product of the right size? */
       mpz_mul(pub->n, key->p, key->q);
-      
-      if (mpz_sizeinbase(pub->n, 2) != n_size)
-	/* We might get an n of size n_size-1. Then just try again. */
-	{
-#if DEBUG
-	  fprintf(stderr,
-		  "\nWanted size: %d, p-size: %d, q-size: %d, n-size: %d\n",
-		  n_size,
-		  mpz_sizeinbase(key->p,2),
-		  mpz_sizeinbase(key->q,2),
-		  mpz_sizeinbase(pub->n,2));
-#endif
-	  if (progress)
-	    {
-	      progress(progress_ctx, 'b');
-	      progress(progress_ctx, '\n');
-	    }
-	  continue;
-	}
-      
+
+      assert (mpz_sizeinbase(pub->n, 2) == n_size);
+
       if (progress)
 	progress(progress_ctx, '\n');
 
@@ -223,7 +195,7 @@ rsa_generate_keypair(struct rsa_public_key *pub,
 
   /* c was computed earlier */
 
-  pub->size = key->size = (mpz_sizeinbase(pub->n, 2) + 7) / 8;
+  pub->size = key->size = (n_size + 7) / 8;
   assert(pub->size >= RSA_MINIMUM_N_OCTETS);
   
   mpz_clear(p1); mpz_clear(q1); mpz_clear(phi); mpz_clear(tmp);
