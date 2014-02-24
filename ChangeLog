@@ -1,3 +1,1560 @@
+2011-09-03  Niels Möller  <nisse@lysator.liu.se>
+
+	* configure.ac (LIBNETTLE_MINOR): Bumped library version, to 4.3.
+
+	* gcm-aes.c: Include config.h.
+	* tools/nettle-lfib-stream.c: Likewise.
+
+	* ripemd160-compress.c: Added missing include of config.h. Needed
+	for correct operation on big-endian systems.
+
+2011-09-02  Niels Möller  <nisse@amfibolit.hack.org>
+
+	* configure.ac: Changed version number to 2.4.
+
+	* Released nettle-2.3.
+
+2011-08-30  Niels Möller  <nisse@lysator.liu.se>
+
+	* testsuite/hmac-test.c: Added tests for hmac-ripemd160.
+
+	* hmac.h: Declare hmac-ripemd160 related functions.
+
+	* Makefile.in (nettle_SOURCES): Added hmac-ripemd160.c.
+
+2011-08-30  Niels Möller  <nisse@amfibolit.hack.org>
+
+	* nettle.texinfo (Hash functions): Document ripemd-160.
+
+	* hmac-ripemd160.c: New file.
+
+	* hmac.h: Declare hmac-ripemd160 functions.
+
+2011-08-29  Niels Möller  <nisse@lysator.liu.se>
+
+	* sha256.c (sha256_update): Updated MD_UPDATE call for new
+	conventions.
+	(sha256_write_digest): Use MD_PAD rather than MD_FINAL, and insert
+	the length manually.
+	* sha512.c: Analogous changes.
+
+	* sha1.c (COMPRESS): New macro.
+	(sha1_update): Updated MD_UPDATE call for new conventions.
+	(sha1_digest): Use MD_PAD rather than MD_FINAL, and insert the
+	length manually.
+
+	* ripemd160.c (ripemd160_init): Use memcpy for initializing the
+	state vector.
+	(COMPRESS): New macro.
+	(ripemd160_update): Use MD_UPDATE.
+	(ripemd160_digest): Inline ripemd160_final processing. Use MD_PAD
+	and _nettle_write_le32.
+	(ripemd160_final): Deleted function.
+
+	* ripemd160.h (struct ripemd160_ctx): Use a 64-bit block count.
+	Renamed digest to state.
+
+	* md5.c (md5_init): Use memcpy for initializing the state vector.
+	(COMPRESS): New macro, wrapping _nettle_md5_compress.
+	(md5_update): Use MD_UPDATE.
+	(md5_digest): Inline md5_final processing. Use MD_PAD and
+	_nettle_write_le32.
+	(md5_final): Deleted.
+
+	* md5.h (struct md5_ctx): Renamed some fields, for consistency.
+
+	* md4.h (struct md4_ctx): Renamed some fields, for consistency.
+
+	* md4.c (md4_init): Use memcpy for initializing the state vector.
+	(md4_update): Use MD_UPDATE.
+	(md4_digest): Inline md4_final processing, using MD_PAD. Use
+	_nettle_write_le32.
+	(md4_block): Renamed, to...
+	(md4_compress): ... new name. Take ctx pinter as argument.
+	(md4_final): Deleted function.
+
+	* md2.c (md2_update): Use MD_UPDATE.
+
+	* macros.h (MD_UPDATE): Added incr argument. Invoke compression
+	function with ctx pointer as argument, rather than ctx->state.
+	(MD_FINAL): Just pad, don't store length field. Renamed to MD_PAD.
+	(MD_PAD): Analogous change of compression invocations.
+
+	* sha512.c: (COMPRESS): New macro wrapping _nettle_sha512_compress.
+	(sha512_update): Use MD_UPDATE.
+	(sha512_final): Deleted function.
+	(sha512_write_digest): Use MD_FINAL.
+
+	* sha256.c (COMPRESS): New macro wrapping _nettle_sha256_compress.
+	(SHA256_INCR): Deleted macro.
+	(sha256_update): Use MD_UPDATE.
+	(sha256_final): Deleted function.
+	(sha256_write_digest): New function, replacing sha256_final, and
+	using MD_FINAL.
+	(sha256_digest): Use sha256_write_digest.
+	(sha224_digest): Likewise.
+
+	* tools/nettle-hash.c (list_algorithms): Fixed typo in header.
+
+	* sha1.c (SHA1_DATA_LENGTH): Deleted unused macro.
+	(sha1_init): Use memcpy to initialize the state vector.
+	(SHA1_INCR): Deleted macro.
+	(sha1_update): Use MD_UPDATE macro, to reduce code duplication.
+	(sha1_digest): Use MD_FINAL macro.
+	(sha1_final): Deleted function.
+
+	* sha.h (struct sha1_ctx): Renamed attribute digest to state.
+
+	* macros.h (MD_UPDATE): New macro.
+	(MD_FINAL): New macro.
+
+2011-08-28  Niels Möller  <nisse@lysator.liu.se>
+
+	* ripemd160.c (ripemd160_final): Use LE_WRITE_UINT32. Deleted byte
+	swapping at the end, leaving it to ripemd160_digest.
+	(ripemd160_digest): Use _nettle_write_le32.
+
+	* Makefile.in (nettle_SOURCES): Added write-le32.c.
+
+	* md5.c (md5_digest): Use _nettle_write_le32.
+
+	* write-le32.c (_nettle_write_le32): New file and function.
+
+	* ripemd160-compress.c (ROL32): Renamed macro (was "rol"). Deleted
+	x86 version using inline assembly; at least gcc-4.4.5 recognizes
+	shift-and-or expressions which are in fact rotations.
+	(_nettle_ripemd160_compress): Use LE_READ_UINT32.
+
+	* configure.ac (LIBNETTLE_MINOR): Bumped library version, to 4.2.
+
+	* testsuite/meta-hash-test.c: Updated for the addition of
+	ripemd-160.
+
+	* testsuite/.test-rules.make: Added rule for ripemd160-test.
+
+	* examples/nettle-benchmark.c (main): Benchmark ripemd-160.
+
+2011-08-28  Niels Möller  <nisse@lysator.liu.se>
+
+	RIPEMD-160 hash function. Ported from libgcrypt by Andres Mejia.
+	* testsuite/ripemd160-test.c: New file.
+	* ripemd160.h: New file.
+	* nettle-meta.h: Declare nettle_ripemd160.
+	* ripemd160.c: New file, ported from libgcrypt.
+	* ripemd160-compress.c: Likewise.
+	* ripemd160-meta.c: New file.
+	* testsuite/Makefile.in (TS_NETTLE_SOURCES): Added
+	ripemd160-test.c.
+	* nettle-meta-hashes.c (nettle_hashes): Added nettle_ripemd160.
+	* Makefile.in (nettle_SOURCES): Added ripemd160.c,
+	ripemd160-compress.c, and ripemd160-meta.c.
+	(HEADERS): Added ripemd160.h.
+
+2011-08-10  Niels Möller  <nisse@amfibolit.hack.org>
+
+	* nettle.texinfo: Fixed mis-placed const in various prototypes.
+	Spotted by Tatsuhiro Tsujikawa.
+
+2011-07-24  Niels Möller  <nisse@lysator.liu.se>
+
+	* Makefile.in (PKGCONFIG_FILES, pkgconfigdir): New variables.
+	(DISTFILES): Added nettle.pc.in and hogweed.pc.in.
+	(nettle.pc, hogweed.pc): New targets (invoking config.status).
+	(install-pkgconfig, uninstall-pkgconfig): New targets.
+	(install-here): Depend on install-pkgconfig.
+	(uninstall-here): Depend on uninstall-pkgconfig.
+	(distclean-here): Delete nettle.pc and hogweed.pc.
+
+2011-07-20  Niels Möller  <nisse@lysator.liu.se>
+
+	* configure.ac: Generate nettle.pc and hogweed.pc.
+
+	* nettle.pc.in, hogweed.pc.in: New files.
+
+2011-07-17  Niels Möller  <nisse@lysator.liu.se>
+
+	* nettle-internal.h: Added missing extern declarations.
+
+2011-07-11  Niels Möller  <nisse@lysator.liu.se>
+
+	* configure.ac: Changed version number to 2.3.
+
+	* Released nettle-2.2.
+
+	* Makefile.in (DISTFILES): Distribute COPYING.LIB, not COPYING,
+
+2011-07-07  Niels Möller  <nisse@lysator.liu.se>
+
+	* tools/misc.h (werror): Removed incorrect noreturn attribute from
+	declaration.
+
+	* examples/io.c (read_file): Bug fix, in dependence of initial
+	size on max_size.
+
+2011-07-01  Niels Möller  <nisse@lysator.liu.se>
+
+	* cbc.c	(CBC_BUFFER_LIMIT): Reduced to 512 bytes.
+	(cbc_decrypt): For in-place operation, use overlapping memxor3 and
+	eliminate a memcpy.
+
+	* ctr.c (ctr_crypt): Reorganized to call the encryption function
+	with several blocks at a time. Handle the case of a single block
+	specially.
+
+	* x86_64/memxor.asm: Added ALIGN for shifting loop. Deleted
+	obsolete ifelse.
+
+2011-06-30  Niels Möller  <nisse@lysator.liu.se>
+
+	* configure.ac: Link in serpent-decrypt.asm, if found.
+
+	* x86_64/serpent-decrypt.asm: Added an SSE2 loop, doing four
+	blocks at a time in parallel.
+
+	* x86_64/serpent-encrypt.asm: Include serpent.m4. Deleted a
+	redundant label.
+
+	* x86_64/serpent.m4: New file, with serpent-related macros.
+
+2011-06-29  Niels Möller  <nisse@lysator.liu.se>
+
+	* x86_64/serpent-decrypt.asm: Wrote main (32-bit) loop.
+	(SBOX0I, SBOX1I, SBOX7I): Fixed bugs.
+
+	* nettle.texinfo (Copyright): Updated for license change to
+	LGPLv2+. Updated copyriight info on serpent.
+
+	* NEWS: Updated information for nettle-2.2.
+
+	* x86_64/serpent-decrypt.asm: New file.
+
+	* x86_64/serpent-encrypt.asm: Fixed .file pseudo op.
+
+	* testsuite/testutils.c (test_cipher_ctr): Display more info on
+	failure.
+
+	* examples/nettle-benchmark.c (bench_ctr): New function.
+	(time_cipher): Also benchmark CTR mode.
+
+	* configure.ac (LIBNETTLE_MINOR): Updated library version number
+	to 4.1.
+	(LIBHOGWEED_MINOR): And to 2.1.
+
+2011-06-22  Niels Möller  <nisse@lysator.liu.se>
+
+	* configure.ac: Use pwd -P when examining lib directories.
+	Link in serpent-encrypt.asm, if found.
+
+2011-06-21  Niels Möller  <nisse@lysator.liu.se>
+
+	* serpent-decrypt.c (SBOX3_INVERSE): Eliminated temporaries.
+	(SBOX4_INVERSE): Likewise.
+	(SBOX5_INVERSE): Likewise.
+	(SBOX6_INVERSE): Likewise.
+	(SBOX7_INVERSE): Likewise.
+	(All SBOX_INVERSE-macros): Deleted type argument, and updated users.
+
+2011-06-20  Niels Möller  <nisse@lysator.liu.se>
+
+	* serpent-decrypt.c: Renamed arguments in sbox macros.
+	(SBOX0_INVERSE): Eliminated temporaries.
+	(SBOX1_INVERSE): Likewise.
+	(SBOX2_INVERSE): Likewise.
+
+	* x86_64/serpent-encrypt.asm: Added an SSE2 loop, doing four
+	blocks at a time in parallel.
+
+	* testsuite/serpent-test.c (test_main): Added some more multiple
+	block tests.
+
+2011-06-15  Niels Möller  <nisse@lysator.liu.se>
+
+	* configure.ac (libdir): On 64-bit Linux, we used to assume that
+	libraries are installed according to the FHS. Since at least
+	Fedora and Gentoo follow the FHS convention, while at least Debian
+	doesn't, we have to try to figure out which convention is used.
+
+2011-06-14  Niels Möller  <nisse@lysator.liu.se>
+
+	* x86_64/serpent-encrypt.asm: Slight simplification of loop logic.
+
+	* x86_64/serpent-encrypt.asm: New file.
+
+2011-06-12  Niels Möller  <nisse@lysator.liu.se>
+
+	* testsuite/serpent-test.c (test_main): Added tests with multiple
+	blocks at a time.
+
+	* serpent-encrypt.c (SBOX6): Renamed arguments. Eliminated
+	temporaries.
+	(SBOX7): Likewise.
+	(All SBOX-macros): Deleted type argument, and updated users.
+
+	* configure.ac: Display summary at the end of configure..
+	(asm_path): Set only if enable_assember is yes.
+
+2011-06-10  Niels Möller  <nisse@lysator.liu.se>
+
+	* serpent-encrypt.c (SBOX5): Renamed arguments. Eliminated
+	temporaries.
+
+2011-06-09  Niels Möller  <nisse@lysator.liu.se>
+
+	* serpent-encrypt.c (SBOX4): Renamed arguments. Eliminated
+	temporaries.
+
+	* configure.ac (LIBNETTLE_LINK, LIBHOGWEED_LINK): Cygwin fix, from
+	Vincent Torri.
+
+2011-06-08  Niels Möller  <nisse@lysator.liu.se>
+
+	* examples/eratosthenes.c (find_first_one): Fixed c99-style
+	declaration. Reported by Sebastian Reitenbach.
+	(find_first_one): Declare the lookup table as static const, and
+	use unsigned char rather than unsigned..
+
+2011-06-07  Niels Möller  <nisse@lysator.liu.se>
+
+	* serpent-encrypt.c (SBOX0): Renamed arguments. Eliminated
+	temporaries.
+	(SBOX1): Likewise.
+	(SBOX2): Likewise.
+	(SBOX3): Likewise.
+
+2011-06-06  Niels Möller  <nisse@lysator.liu.se>
+
+	* Makefile.in (DISTFILES): Added serpent-internal.h.
+	(nettle_SOURCES): Replaced serpent.c by serpent-set-key.c,
+	serpent-encrypt.c, and serpent-decrypt.c.
+
+	* serpent.c: Replaced by several new files.
+	* serpent-set-key.c: New file.
+	* serpent-encrypt.c: New file.
+	* serpent-decrypt.c: New file.
+	* serpent-internal.h: New file.
+
+	* serpent.c [HAVE_NATIVE_64_BIT]: Process two blocks at a time in
+	parallel. Measured speedup of 10%--25% (higher for encryption) on
+	x86_64.
+
+2011-06-01  Niels Möller  <nisse@lysator.liu.se>
+
+	* serpent.c (ROUNDS): Deleted macro.
+	(serpent_block_t): Deleted array typedef.
+	(KEYXOR): New macro, replacing BLOCK_XOR.
+	(BLOCK_COPY, SBOX, SBOX_INVERSE): Deleted macros.
+	(LINEAR_TRANSFORMATION): Use four separate arguments.
+	(LINEAR_TRANSFORMATION_INVERSE): Likewise.
+	(ROUND): Take separate arguments for all input and output words.
+	(ROUND_INVERSE): Likewise.
+	(ROUND_LAST, ROUND_FIRST_INVERSE): Deleted macros.
+	(serpent_set_key): Moved loop termination test.
+	(serpent_encrypt): Rewrote with unrolling of just eight rounds,
+	and without serpent_block_t.
+	(serpent_decrypt): Likewise.
+
+	* serpent.c: Added do { ... } while (0) around block macros.
+	(serpent_key_t): Deleted array typedef.
+	(ROL32, ROR32): Renamed macros, were rol and ror.
+	(KS_RECURRENCE, KS): New macros.
+	(serpent_key_pad): Renamed, from...
+	(serpent_key_prepare): ...old name.
+	(serpent_subkeys_generate): Deleted function.
+	(serpent_set_key): Rewrote the generation of subkeys. Reduced both
+	temporary storage and code size (less unrolling)
+
+2011-05-31  Niels Möller  <nisse@lysator.liu.se>
+
+	* testsuite/serpent-test.c (test_main): Enabled test with short,
+	40-bit, key.
+
+	* serpent.c (byte_swap_32): Deleted macro.
+	(serpent_key_prepare): Use LE_READ_UINT32. Don't require aligned
+	input, and support arbitrary key sizes.
+
+2011-05-30  Simon Josefsson  <simon@josefsson.org>
+
+	* serpent.c: Rewrite, based on libgcrypt code.  License changed
+	from GPL to LGPL.
+	* serpent_sboxes.h: Removed.
+	* Makefile.in: Drop serpent_sboxes.h.
+
+2011-05-31  Niels Möller  <nisse@lysator.liu.se>
+
+	* testsuite/serpent-test.c (test_main): Added some tests for
+	padding of keys of length which is not a multiple of four bytes.
+
+2011-05-30  Simon Josefsson  <simon@josefsson.org>
+
+	* testsuite/serpent-test.c (test_main): Add test vectors from
+	libgcrypt.
+
+2011-05-21  Niels Möller  <nisse@lysator.liu.se>
+
+	* dsa-keygen.c (dsa_generate_keypair): Avoid double init of mpz
+	variable. Spotted by Nikos Mavrogiannopoulos.
+
+2011-05-06  Niels Möller  <nisse@lysator.liu.se>
+
+	* configure.ac: Fix link flags for shared libraries on Solaris,
+	which needs -h to set the soname. Patch contributed by Dagobert
+	Michelsen.
+
+2011-05-06  Niels Möller  <nisse@lysator.liu.se>
+
+	* configure.ac: New configure option --enable-gcov.
+
+	* arcfour.h (arcfour_stream): Deleted obsolete define.
+
+2011-04-27  Niels Möller  <nisse@lysator.liu.se>
+
+	* tools/nettle-hash.c (find_algorithm): Require exact match.
+
+2011-04-15  Niels Möller  <nisse@lysator.liu.se>
+
+	Reverted broken byte-order change from 2001-06-17:
+	* serpent.c (serpent_set_key): Use correct byteorder.
+	(serpent_encrypt): Likewise.
+	(serpent_decrypt): Likewise.
+
+	* testsuite/serpent-test.c (decode_hex_reverse): New function.
+	(RH, RHL): New macros.
+	(test_main): Byte reverse inputs and outputs for the testvectors
+	taken from the serpent submission package. Enable test vectors
+	from http://www.cs.technion.ac.il/~biham/Reports/Serpent/.
+
+2011-03-23  Niels Möller  <nisse@lysator.liu.se>
+
+	* tools/sexp-conv.c (xalloc): Deleted function, now it's in misc.c
+	instead.
+
+	* configure.ac: Use LSH_FUNC_STRERROR.
+
+	* tools/Makefile.in (TARGETS): Added nettle-hash, and related
+	build rules.
+	(SOURCES): Added nettle-hash.c.
+
+	* tools/misc.c (xalloc): New function.
+
+	* tools/pkcs1-conv.c (main): Made the OPT_* constants local, and
+	fixed numerical values to start with non-ASCII 0x300.
+
+	* tools/nettle-hash.c: New file.
+
+2011-03-23  Niels Möller  <nisse@lysator.liu.se>
+
+	Contributed by Daniel Kahn Gillmor:
+	* testsuite/Makefile.in (TS_NETTLE_SOURCES): Added
+	meta-hash-test.c, meta-cipher-test.c, and meta-armor-test.c.
+
+	* testsuite/meta-hash-test.c: New file.
+	* testsuite/meta-cipher-test.c: New file.
+	* testsuite/meta-armor-test.c: New file.
+
+	* nettle.texinfo: Document nettle_hashes and nettle_ciphers.
+
+	* nettle-meta.h: Declare algorithm lists nettle_ciphers,
+	nettle_hashes, nettle_armors.
+
+	* Makefile.in (nettle_SOURCES): Added nettle-meta-hashes.c,
+	nettle-meta-ciphers.c, and nettle-meta-armors.c.
+
+	* nettle-meta-armors.c: New file.
+	* nettle-meta-ciphers.c: New file.
+	* nettle-meta-hashes.c: New file.
+
+2011-02-18  Niels Möller  <nisse@lysator.liu.se>
+
+	* arcfour.c (arcfour_stream): Deleted function. It's not very
+	useful, and neither documented nor tested.
+
+2011-02-16  Niels Möller  <nisse@lysator.liu.se>
+
+	* cbc.h (CBC_ENCRYPT): Avoid using NULL; we don't ensure that it
+	is defined.
+	(CBC_DECRYPT): Likewise.
+
+	* gcm-aes.c (gcm_aes_set_iv): Use GCM_SET_IV.
+	(gcm_aes_set_key): Deleted cast.
+	(gcm_aes_encrypt): Likewise.
+	(gcm_aes_decrypt): Likewise.
+	(gcm_aes_digest): Likewise.
+	(gcm_aes_update): One less argument to GCM_UPDATE.
+
+	* gcm.h (GCM_SET_KEY): Added cast to nettle_crypt_func *. Help
+	compiler type checking despite this cast.
+	(GCM_ENCRYPT): Likewise.
+	(GCM_DECRYPT): Likewise.
+	(GCM_DIGEST): Likewise.
+	(GCM_SET_IV): New macro, for completeness.
+	(GCM_UPDATE): Deleted unused argument encrypt.
+
+2011-02-14  Niels Möller  <nisse@lysator.liu.se>
+
+	* nettle.texinfo: Split node on cipher modes, and started on
+	the GCM documentation.
+
+	* testsuite/gcm-test.c (test_gcm_aes): Deleted function, replaced
+	by test_aead.
+	(test_main): Use test_aead.
+
+	* testsuite/testutils.c (test_aead): New function, replacing
+	test_gcm_aes and before that test_cipher_gcm.
+
+	* nettle-internal.c (nettle_gcm_aes128): New const struct.
+	(nettle_gcm_aes192): Likewise.
+	(nettle_gcm_aes256): Likewise.
+
+	* nettle-internal.h (struct nettle_aead): Tentative interface for
+	authenticated encryption with associated data.
+
+	* examples/nettle-benchmark.c (time_gcm): Renamed. Updated for
+	gcm_aes_auth to gcm_aes_update renaming. Benchmark both encryption
+	and hashing.
+	(time_gmac): ...old name.
+
+	* nettle-internal.c (des_set_key_hack): Don't touch the bits
+	parity, since thay are now ignored.
+	(des3_set_key_hack): Likewise.
+
+	* cast128-meta.c (nettle_cast128): Don't pass keysize.
+	* nettle-meta.h (_NETTLE_CIPHER_FIX): Deleted keysize parameter
+	derived from the appropriate constant instead.
+
+	* testsuite/gcm-test.c (test_gcm_aes): Updated for gcm_aes_auth to
+	gcm_aes_update renaming.
+
+2011-02-13  Niels Möller  <nisse@lysator.liu.se>
+
+	* gcm.h (GCM_UPDATE): Renamed, from...
+	(GCM_AUTH): ...old name.
+
+	* gcm-aes.c (gcm_aes_update): Renamed, from...
+	(gcm_aes_auth): ...old name.
+
+	* gcm.c (gcm_update): Renamed, and fixed an assert. From...
+	(gcm_auth): ...old name.
+
+	* gcm.h (GCM_TABLE_BITS): Increase table size to 8 bits,
+	corresponding to 4 KByte of key-dependent tables.
+
+2011-02-10  Niels Möller  <nisse@lysator.liu.se>
+
+	* x86_64/memxor.asm: New file. Improves performance by 22% for the
+	unaligned01 case and 35% for the unaligned12 case, benchmarked on
+	Intel SU1400.
+
+	* examples/nettle-benchmark.c (cgt_works_p): New function.
+	(cgt_time_start): Likewise.
+	(cgt_time_end): Likewise.
+	(clock_time_start): Likewise.
+	(clock_time_end): Likewise.
+	(time_function): Read clock via function pointers time_start and
+	time_end, so we can select method at runtime.
+	(xalloc): Use die function.
+	(main): Choose timing function. If available, try clock_gettime,
+	and fall back to clock if it doesn't exist.
+
+	* examples/nettle-benchmark.c (die): New function.
+	(TIME_END, TIME_START): Check return value from clock_gettime.
+
+	* gcm.h (union gcm_block): Use correct length for w array.
+
+	* testsuite/gcm-test.c (test_main): Added the rest of the
+	testcases from the spec.
+
+2011-02-09  Niels Möller  <nisse@lysator.liu.se>
+
+	* testsuite/gcm-test.c (test_main): Enabled testcases 5 and 6,
+	with different IV lengths.
+
+	* gcm-aes.c (gcm_aes_set_iv): Updated for gcm_set_iv change.
+
+	* gcm.c (gcm_hash_sizes): New function.
+	(gcm_set_iv): Added support for IVs of arbitrary size. Needed
+	another argument, for the hash subkey.
+	(gcm_digest): Use gcm_hash_sizes.
+
+	* examples/nettle-benchmark.c (time_gmac): Use gcm_aes interface.
+
+	* testsuite/gcm-test.c (test_gcm_aes): New function, replacing
+	test_cipher_gcm and using the new gcm_aes interface.
+	(test_main): Updated to use test_gcm_aes.
+	* testsuite/testutils.c (test_cipher_gcm): Deleted function.
+
+	* Makefile.in (nettle_SOURCES): Added gcm-aes.c.
+
+	* gcm.c (gcm_set_key): Replaced context argument by a struct
+	gcm_key *.
+	(gcm_hash): Replaced context argument by a struct gcm_key * and a
+	pointer to the hashing state block.
+	(gcm_auth): Added struct gcm_key * argument.
+	(gcm_encrypt): Likewise.
+	(gcm_decrypt): Likewise.
+	(gcm_digest): Likewise.
+
+	* gcm-aes.c: New file.
+	(gcm_aes_set_key): New function.
+	(gcm_aes_set_iv): Likewise.
+	(gcm_aes_auth): Likewise.
+	(gcm_aes_encrypt): Likewise.
+	(gcm_aes_decrypt): Likewise.
+	(gcm_aes_digest): Likewise.
+
+	* gcm.h (struct gcm_key): Moved the key-dependent and
+	message-independent state to its own struct.
+	(struct gcm_ctx): ... and removed it here.
+	(GCM_CTX): New macro.
+	(GCM_SET_KEY): Likewise.
+	(GCM_AUTH): Likewise.
+	(GCM_ENCRYPT): Likewise.
+	(GCM_DECRYPT): Likewise.
+	(GCM_DIGEST): Likewise.
+	(struct gcm_aes_ctx): New struct.
+
+2011-02-08  Niels Möller  <nisse@lysator.liu.se>
+
+	* gcm.h (struct gcm_ctx): The hash key is now always an array,
+	named h, with array size depending on GCM_TABLE_BITS.
+	* gcm.c (gcm_gf_shift): Added a separate result argument.
+	(gcm_gf_mul): Compile bitwise version only when GCM_TABLE_BITS ==
+	0. Simplified interface with just two arguments pointing to
+	complete blocks.
+	(gcm_gf_shift_4, gcm_gf_shift_8): Renamed table-based functions, from...
+	(gcm_gf_shift_chunk): ... old name.
+	(gcm_gf_mul): Renamed both table-based versions and made the
+	argument types compatible with the bitwise gcm_gf_mul.
+	(gcm_gf_mul_chunk): ... the old name.
+	(gcm_set_key): Initialize the table using adds and shifts only.
+	When GCM_TABLE_BITS > 0, this eliminates the only use of the
+	bitwise multiplication.
+	(gcm_hash): Simplified, now that we have the same interface for
+	gcm_gf_mul, regardless of table size.
+
+	* gcm.c	(GHASH_POLYNOMIAL): Use unsigned long for this constant.
+	(gcm_gf_shift_chunk): Fixed bugs for the big endian 64-bit case,
+	e.g., sparc64. For both 4-bit and 8-bit tables.
+
+	* gcm.c: Use the new union gcm_block for all gf operations.
+
+	* gcm.h (union gcm_block): New union, used to enforce alignment.
+
+2011-02-07  Niels Möller  <nisse@lysator.liu.se>
+
+	* gcm.c (gcm_gf_shift_chunk) : Bug fix for little-endian 8-bit
+	tables.
+
+	* gcm.c (gcm_gf_mul_chunk): Special case first and last iteration.
+	(gcm_gf_add): New function, a special case of memxor. Use it for
+	all memxor calls with word-aligned 16 byte blocks. Improves
+	performance to 152 cycles/byte with no tables, 28 cycles per byte
+	with 4-bit tables and 10.5 cycles per byte with 8-bit tables.
+
+	Introduced 8-bit tables. If enabled, gives gmac performance of 19
+	cycles per byte (still on intel x86_64).
+	* gcm.c (gcm_gf_shift_chunk): New implementation for 8-bit tables.
+	(gcm_gf_mul_chunk): Likewise.
+	(gcm_set_key): Generate 8-bit tables.
+
+	* Makefile.in (SOURCES): Added gcmdata.c.
+
+	* gcm.h (GCM_TABLE_BITS): Set to 4.
+
+2011-02-06  Niels Möller  <nisse@lysator.liu.se>
+
+	* Makefile.in (TARGETS): Added gcmdata.
+	(gcmdata): New rule.
+
+	Introduced 4-bit tables. Gives gmac performance of 45 cycles per
+	byte (still on intel x86_64).
+	* gcm.c (gcm_gf_shift): Renamed. Tweaked little-endian masks.
+	(gcm_rightshift): ... old name.
+	(gcm_gf_mul): New argument for the output. Added length argument
+	for one of the inputs (implicitly padding with zeros).
+	(shift_table): New table (in 4-bit and 8-bit versions), generated
+	by gcmdata.
+	(gcm_gf_shift_chunk): New function shifting 4 bits at
+	a time.
+	(gcm_gf_mul_chunk): New function processing 4 bits at a time.
+	(gcm_set_key): Generation of 4-bit key table.
+	(gcm_hash): Use tables, when available.
+
+	* gcmdata.c (main): New file.
+
+	* gcm.c (gcm_rightshift): Moved the reduction of the shifted out
+	bit here.
+	(gcm_gf_mul): Updated for gcm_rightshift change. Improves gmac
+	performance to 181 cycles/byte.
+
+	* gcm.c (gcm_gf_mul): Rewrote. Still uses the bitwise algorithm from the
+	specification, but with separate byte and bit loops. Improves gmac
+	performance a bit further, to 227 cycles/byte.
+
+	* gcm.c (gcm_rightshift): Complete rewrite, to use word rather
+	than byte operations. Improves gmac performance from 830 cycles /
+	byte to (still poor) 268 cycles per byte on intel x86_64.
+
+2011-02-05  Niels Möller  <nisse@lysator.liu.se>
+
+	* examples/nettle-benchmark.c (time_gmac): New function.
+	(main): Call time_gmac.
+
+	* testsuite/Makefile.in (TS_NETTLE_SOURCES): Added gcm-test.c.
+
+	* testsuite/testutils.c (test_cipher_gcm): New function,
+	contributed by Nikos Mavrogiannopoulos.
+
+	* testsuite/gcm-test.c: New file, contributed by Nikos
+	Mavrogiannopoulos.
+
+	* Makefile.in (nettle_SOURCES): Added gcm.c.
+	(HEADERS): Added gcm.h.
+
+	* gcm.c: New file, contributed by Nikos Mavrogiannopoulos.
+	* gcm.h: New file, contributed by Nikos Mavrogiannopoulos.
+
+	* macros.h (INCREMENT): New macro, moved from ctr.c. Deleted third
+	argument.
+	* ctr.c: Use INCREMENT macro from macros.h, deleted local version.
+
+2011-01-07  Niels Möller  <nisse@lysator.liu.se>
+
+	* testsuite/Makefile.in (check): Add ../.lib to PATH, since that's
+	where w*ndows looks for dlls.
+
+	* testsuite/testutils.c (test_cipher_stream): More debug output on
+	failure.
+
+2010-12-14  Niels Möller  <nisse@lysator.liu.se>
+
+	* nettle-types.h: Deleted some unnecessary parenthesis from
+	function typedefs.
+	(nettle_realloc_func): Moved typedef here...
+	* realloc.h: ...from here.
+
+	* buffer.c (nettle_buffer_init_realloc): Use an explicit pointer
+	for realloc argument.
+
+2010-12-07  Niels Möller  <nisse@lysator.liu.se>
+
+	* nettle.texinfo (Copyright): Updated info on blowfish.
+
+2010-11-26  Niels Möller  <nisse@lysator.liu.se>
+
+	Reapplied optimizations (150% speedup on x86_32) and other fixes,
+	relicensing them as LGPL.
+	* blowfish.c (do_encrypt): Renamed, to...
+	(encrypt): ...new name.
+	(F): Added context argument. Shift input explicitly, instead of
+	reading individual bytes via memory.
+	(R): Added context argument.
+	(encrypt): Deleted a bunch of local variables. Using the context
+	pointer for everything should consume less registers.
+	(decrypt): Likewise.
+	(initial_ctx): Arrange constants into a struct, to simplify key
+	setup.
+	(blowfish_set_key): Some simplification.
+
+2010-11-26  Simon Josefsson  <simon@josefsson.org>
+
+	* blowfish.c: New version ported from libgcrypt. License changed
+	from GPL to LGPL.
+
+2010-11-25  Niels Möller  <nisse@lysator.liu.se>
+
+	* Makefile.in (install-shared-nettle): Use INSTALL_DATA, which
+	clears the execute permission bits.
+	(install-shared-hogweed): Likewise.
+
+2010-11-16  Niels Möller  <nisse@lysator.liu.se>
+
+	* configure.ac: Updated gmp url.
+
+2010-11-01  Niels Möller  <nisse@lysator.liu.se>
+
+	* tools/misc.c (werror): Don't call exit (copy&paste-error).
+
+2010-10-26  Niels Möller  <nisse@lysator.liu.se>
+
+	* examples/rsa-encrypt.c (main): No extra message for bad options.
+
+	* examples/rsa-keygen.c (main): Added long options. Deleted -?,
+	and fixed handling of bad options.
+
+	* examples/next-prime.c (main): Deleted -?, and fixed handling of
+	bad options.
+	* examples/random-prime.c (main): Likewise.
+
+2010-10-22  Niels Möller  <nisse@lysator.liu.se>
+
+	* examples/nettle-benchmark.c (main): Added long options. Deleted -?,
+	and fixed handling of bad options.
+
+	* examples/eratosthenes.c (main): Added long options. Deleted -?,
+	and fixed handling of bad options. Renamed -s to -q (long option
+	--quiet).
+
+	* tools/pkcs1-conv.c (main): Deleted short alias -? for --help,
+	and fixed handling of bad options.
+	* tools/sexp-conv.c (parse_options): Likewise.
+
+2010-10-06  Niels Möller  <nisse@lysator.liu.se>
+
+	* memxor.c (memxor3): Optimized.
+	(memxor3_common_alignment): New function.
+	(memxor3_different_alignment_b): New function.
+	(memxor3_different_alignment_ab): New function.
+	(memxor3_different_alignment_all): New function.
+
+	* examples/nettle-benchmark.c (time_function): Reorganized, to
+	reduce overhead.
+	(time_memxor): Also benchmark memxor3.
+
+	* x86_64/memxor.asm: New file.
+
+	* examples/nettle-benchmark.c (overhead): New global variable.
+	(time_function): Compensate for call overhead.
+	(bench_nothing, time_overhead): New functions.
+	(time_memxor): Tweaked src size, making it an integral number of
+	words.
+	(main): Call time_overhead.
+
+2010-10-01  Niels Möller  <nisse@lysator.liu.se>
+
+	* x86_64/camellia-crypt-internal.asm (ROUND): Reordered sbox
+	lookups.
+
+	* testsuite/memxor-test.c: Also test memxor3.
+
+2010-09-30  Niels Möller  <nisse@lysator.liu.se>
+
+	* configure.ac: Link in memxor.asm, if found.
+
+	* testsuite/testutils.c (test_cipher_cbc): Print more info when
+	failing.
+
+	* testsuite/memxor-test.c (test_xor): Added verbose printout.
+
+	* examples/nettle-benchmark.c (time_memxor): Count size of
+	unsigned long as "block size" for memxor.
+
+2010-09-24  Niels Möller  <nisse@lysator.liu.se>
+
+	* testsuite/.test-rules.make: Added rule for memxor-test.
+	* testsuite/Makefile.in (TS_NETTLE_SOURCES): Added memxor-test.c
+	* testsuite/memxor-test.c: New file.
+
+	* memxor.c (memxor_common_alignment): New function.
+	(memxor_different_alignment): New function.
+	(memxor): Optimized to do word-operations rather than byte
+	operations.
+
+	* configure.ac (HAVE_NATIVE_64_BIT): New config.h define.
+
+	Partial revert of 2010-09-20 changes.
+	* camellia-set-encrypt-key.c (camellia_set_encrypt_key):
+	Reintroduce CAMELLIA_F_HALF_INV, for 32-bit machines.
+	* camellia-crypt-internal.c (CAMELLIA_ROUNDSM): Two variants,
+	differing in where addition of the key is done.
+	* x86/camellia-crypt-internal.asm: Moved addition of key.
+
+2010-09-22  Niels Möller  <nisse@lysator.liu.se>
+
+	* examples/nettle-benchmark.c (BENCH_INTERVAL): Changed unit to
+	seconds.
+	(time_function): Use clock_gettime with CLOCK_PROCESS_CPUTIME_ID,
+	if available. This gives better accuracy, at least on recent
+	linux.
+	(BENCH_INTERVAL): Reduced to 0.1 s.
+	(struct bench_memxor_info): New struct.
+	(bench_memxor): New function.
+	(time_memxor): New function.
+	(main): Use time_memxor. Added optional argument used to limit the
+	algorithms being benchmarked.
+	(GET_CYCLE_COUNTER): Define also for x86_64.
+	(time_memxor): Improved display.
+
+	* examples/Makefile.in (nettle-benchmark): Link using
+	$(BENCH_LIBS) rather than $(LIBS).
+
+	* configure.ac: Check for clock_gettime, and add -lrt to
+	BENCH_LIBS if needed.
+
+2010-09-20  Niels Möller  <nisse@lysator.liu.se>
+
+	* configure.ac: Less quoting when invoking $CC, to allow CC="gcc
+	-m32".
+
+	* x86/camellia-crypt-internal.asm (ROUND): Adapted to new key
+	convention, moving key xor to the end.
+
+	* camellia-set-encrypt-key.c (CAMELLIA_F_HALF_INV): Deleted macro.
+	(camellia_set_encrypt_key): Deleted the CAMELLIA_F_HALF_INV
+	operations intended for moving the key xor into the middle of the
+	round.
+
+	* camellia-crypt-internal.c (CAMELLIA_ROUNDSM): Moved addition of
+	key to the end, to use a 64-bit xor operation.
+
+	* x86_64/camellia-crypt-internal.asm: New file.
+
+	* x86_64/machine.m4 (LREG, HREG, XREG): New macros.
+
+2010-09-17  Niels Möller  <nisse@lysator.liu.se>
+
+	* configure.ac: Support shared libraries (dlls) with mingw32.
+	Contributed by David Hoyt.
+
+2010-07-25  Niels Möller  <nisse@lysator.liu.se>
+
+	* configure.ac: Changed version number to nettle-2.2.
+
+	* Released nettle-2.1.
+
+	* configure.ac: Use camellia-crypt-internal.asm, if available.
+	Bumped soname to libnettle.so.4, and reset LIBNETTLE_MINOR to
+	zero.
+
+	* x86/machine.m4 (LREG, HREG): Moved macros here, from...
+	* x86/aes.m4: ...here.
+
+	* x86/camellia-crypt-internal.asm: New file.
+
+	* nettle.texinfo: Updated and expanded section on DSA.
+	Document aes_invert_key, and camellia. Added missing functions
+	rsa_sha512_verify and rsa_sha512_verify_digest.
+
+	* camellia.h (struct camellia_ctx): Eliminate the two unused
+	subkeys, and renumber the remaining ones.
+	* camellia-crypt-internal.c (_camellia_crypt): Updated for
+	renumbered subkeys.
+	* camellia-set-encrypt-key.c (camellia_set_encrypt_key): Likewise.
+	* camellia-set-decrypt-key.c (camellia_invert_key): Likewise.
+
+	* camellia-set-encrypt-key.c (camellia_set_encrypt_key): Inline
+	the expansion of camellia_setup128 and camellia_setup256, keeping
+	the unexpanded key in scalar variables.
+	(camellia_setup128): Deleted.
+	(camellia_setup256): Deleted.
+
+2010-07-24  Niels Möller  <nisse@lysator.liu.se>
+
+	* camellia-set-encrypt-key.c (camellia_set_encrypt_key): Reduced
+	code size, no complete loop unroll. Use one loop for each phase of
+	the post-processing.
+
+	* testsuite/camellia-test.c: New tests for camellia_invert_key.
+	* testsuite/aes-test.c: New tests for aes_invert_key.
+
+	* aes.h (aes_invert_key): Declare it.
+
+	* aes-set-decrypt-key.c (aes_invert_key): New function, key
+	inversion code extracted from aes_set_decrypt_key.
+	(aes_set_decrypt_key): Use aes_invert_key.
+
+	* camellia-set-encrypt-key.c (camellia_setup128): Generate
+	unmodified subkeys according to the spec. Moved clever combination
+	of subkeys to camellia_set_encrypt_key.
+	(camellia_setup256): Likewise.
+	(camellia_set_encrypt_key): Moved subkey post-processing code
+	here, and reduce code duplication between 128-bit keys and larger
+	keys.
+
+	* camellia.c: Deleted file, split into several new files...
+	* camellia-table.c (_camellia_table): New file with the constant
+	sbox tables.
+	* camellia-set-encrypt-key.c: New file.
+	(camellia_setup128): Generate unmodified subkeys according to the
+	spec. Moved clever combination of subkeys to camellia_set_encrypt_key.
+	(camellia_setup256): Likewise.
+
+	* camellia-set-decrypt-key.c: New file.
+	(camellia_invert_key): Key inversion function.
+	(camellia_set_decrypt_key): New key setup function.
+	* camellia-internal.h: New file.
+	* camellia-crypt.c (camellia_crypt): New file, new wrapper
+	function passing the sbox table to _camellia_crypt.
+	* camellia-crypt-internal.c (_camellia_crypt): New file, with main
+	encrypt/decrypt function.
+	* Makefile.in (nettle_SOURCES): Updated list of camellia source files.	
+	(DISTFILES): Added camellia-internal.h.
+
+2010-07-20  Niels Möller  <nisse@lysator.liu.se>
+
+	* camellia-meta.c: Use _NETTLE_CIPHER_SEP_SET_KEY.
+
+	* camellia.h (struct camellia_ctx): Replaced flag camellia128 by
+	expanded key length nkeys.
+
+	* camellia.c (camellia_set_encrypt_key): Renamed, from...
+	(camellia_set_key): ... old name.
+	(camellia_invert_key): New function.
+	(camellia_set_decrypt_key): New function, using
+	camellia_invert_key.
+	(camellia_crypt): Renamed, from...
+	(camellia_encrypt): ... old name.
+	(camellia_decrypt): Deleted, no longer needed. camellia_crypt used
+	for both encryption and decryption.
+
+	* nettle-meta.h (_NETTLE_CIPHER_SEP_SET_KEY): New macro.
+
+	* dsa-keygen.c: Removed unnecessary include of memxor.h.
+
+	* camellia.c: Rewrote to use 64-bit type for subkeys and use
+	64-bit operations throughout. Performance on x86_32, when compiled
+	with gcc-4.4.4, is reduced by roughly 15%, this should be fixed
+	later.
+
+	* camellia.h (struct camellia_ctx): Use type uint64_t for subkeys.
+
+2010-07-07  Niels Möller  <nisse@lysator.liu.se>
+
+	* aes.h (aes_encrypt, aes_decrypt): Declare ctx argument as const.
+	Also updated implementation.
+	* blowfish.h (blowfish_encrypt, blowfish_decrypt): Likewise.
+	* cast128.h (cast128_encrypt, cast128_decrypt): Likewise.
+	* serpent.h (serpent_encrypt, serpent_decrypt): Likewise.
+	* twofish.h (twofish_encrypt, twofish_decrypt): Likewise.
+
+	* testsuite/Makefile.in (TS_NETTLE_SOURCES): Added
+	camellia-test.c.
+
+	* examples/nettle-benchmark.c: Added camellia ciphers.
+
+	* Makefile.in (nettle_SOURCES): Added camellia.c and
+	camellia-meta.c.
+	(HEADERS): Added camellia.h.
+
+	* nettle-meta.h (nettle_camellia128): Declare.
+	(nettle_camellia192): Likewise.
+	(nettle_camellia256): Likewise.
+
+	* camellia-meta.c: New file.
+
+	* camellia.h: Rewrote interface to match nettle conventions.
+
+	* camellia.c: Converted to nettle conventions.
+	(camellia_encrypt128, camellia_encrypt256): Unified to new
+	function...
+	(camellia_encrypt): ...New function, with a loop doing 6
+	regular rounds, one FL round and one FLINV round per iteration,
+	with iteration count depending on the key size.
+
+	(camellia_decrypt128, camellia_decrypt256): Similarly unified
+	as...
+	(camellia_decrypt): ...New function, analogous to
+	camellia_encrypt.
+
+2010-07-06  Niels Möller  <nisse@lysator.liu.se>
+
+	* camellia.c, camellia.h: New files, copied from
+	http://info.isl.ntt.co.jp/crypt/eng/camellia/dl/camellia-LGPL-1.2.0.tar.gz.
+
+	* testsuite/camellia-test.c: New file.
+
+2010-07-05  Niels Möller  <nisse@lysator.liu.se>
+
+	* nettle.texinfo: Document new conventions for weak key and des
+	parity checks. Document des_check_parity.
+
+	* testsuite/des-test.c (test_weak): Don't check the deleted status
+	attribute.
+
+	* des-compat.c (des_key_sched): Rewrote error checking logic for
+	the case of non-zero des_check_key.
+
+	* des3.c (des3_set_key): Changed weak key detection logic.
+	Complete key setup also for weak keys, and don't set the status
+	attribute.
+
+	* des.c (des_set_key): New iteration logic, to keep key pointer
+	unchanged. Moved weak key check to the end, and don't set the
+	status attribute.
+	(des_encrypt): Ignore status attribute.
+	(des_decrypt): Likewise.
+
+	* des.h (enum des_error): Deleted.
+	(struct des_ctx): Deleted status attribute.
+	(struct des3_ctx): Likewise.
+
+	* blowfish.c (initial_ctx): Deleted status value.
+	(blowfish_encrypt): Ignore status attribute.
+	(blowfish_decrypt): Likewise.
+	(blowfish_set_key): Return result from weak key check, without
+	setting the status attribute.
+
+	* blowfish.h (enum blowfish_error): Deleted.
+	(struct blowfish_ctx): Deleted status attribute.
+
+	* Makefile.in (des_headers): Deleted parity.h.
+
+2010-06-30  Niels Möller  <nisse@lysator.liu.se>
+
+	* testsuite/des-test.c (test_des): New function.
+	(test_weak): New function.
+	(test_main): Use test_des and test_weak. Added tests for all the
+	weak keys. Added some tests with invalid (to be ignored) parity
+	bits.
+
+	* des.c (parity_16): New smaller parity table.
+	(des_check_parity): New function.
+	(des_fix_parity): Use parity_16.
+	(des_weak_p): New weak-key detection. Ignores parity bits, and
+	uses a hash table.
+	(des_set_key): Deleted parity checking code. Replaced old weak-key
+	detection code by a call to des_weak_p.
+
+2010-06-04  Niels Möller  <nisse@lysator.liu.se>
+
+	* testsuite/testutils.c (test_dsa_key): Updated for new name
+	DSA_SHA1_MIN_P_BITS.
+
+	* dsa-keygen.c (dsa_generate_keypair): Use DSA_SHA1_MIN_P_BITS and
+	DSA_SHA256_MIN_P_BITS.
+
+	* dsa.h (DSA_MIN_P_BITS, DSA_Q_OCTETS, DSA_Q_BITS): Renamed to...
+	(DSA_SHA1_MIN_P_BITS, DSA_SHA1_Q_OCTETS, DSA_SHA1_Q_BITS): New
+	names.
+
+	* sexp2dsa.c (dsa_keypair_from_sexp_alist): New argument q_bits.
+	Renamed parameter limit to p_max_bits.
+	(dsa_sha1_keypair_from_sexp): Renamed, was dsa_keypair_from_sexp.
+	Updated to call dsa_keypair_from_sexp_alist with the new argument.
+	(dsa_sha256_keypair_from_sexp): New function.
+	(dsa_signature_from_sexp): New argument q_bits.
+
+	* der2dsa.c (dsa_params_from_der_iterator): Enforce 160-bit limit
+	on q. Renamed parameter limit to p_max_bits.
+	(dsa_openssl_private_key_from_der_iterator): Enforce 160-bit limit
+	on q and x. Renamed parameter limit to p_max_bits.
+
+2010-06-03  Niels Möller  <nisse@lysator.liu.se>
+
+	* testsuite/dsa-test.c (test_main): Added test for dsa-sha256.
+
+2010-06-02  Niels Möller  <nisse@lysator.liu.se>
+
+	* testsuite/dsa-test.c (test_main): Provide expected value of the
+	signature.
+
+	* testsuite/testutils.c (test_dsa160): Added argument for expected
+	signature.
+	(test_dsa256): Likewise.
+
+2010-06-01  Niels Möller  <nisse@lysator.liu.se>
+
+	* testsuite/rsa-keygen-test.c (test_main): Updated expected
+	signatures.
+
+	* examples/random-prime.c (main): Updated for nettle_random_prime
+	change.
+	* testsuite/random-prime-test.c (test_main): Likewise.
+
+	* rsa-keygen.c (bignum_random_prime): Deleted function.
+	(rsa_generate_keypair): Use new nettle_random_prime. Generate
+	secret factors p and q with the two most significant bits set.
+
+	* dsa-keygen.c (dsa_generate_keypair): Updated for changes in
+	nettle_random_prime and _nettle_generate_pocklington_prime. Invoke
+	progress callback.
+
+	* bignum-random-prime.c (_nettle_generate_pocklington_prime): New
+	argument top_bits_set, to optionally generate primes with the two
+	most significant bits set. Reordered argument list.
+	(nettle_random_prime): Likewise, added top_bits_set argument.
+	Invoke progress callback when a prime is generated.
+
+2010-05-26  Niels Möller  <nisse@lysator.liu.se>
+
+	* dsa-keygen.c (dsa_generate_keypair): Use
+	_nettle_generate_pocklington_prime. Deleted old key generation
+	code.
+
+	* bignum-random-prime.c (_nettle_generate_pocklington_prime): Also
+	return the used r. Updated caller.
+
+	* examples/random-prime.c (main): Allow sizes down to 3 bits.
+
+	* bignum-random-prime.c (_nettle_generate_pocklington_prime): New
+	function. Rely on mpz_probab_prime_p (for lack of a trial division
+	function) for trial division.
+	(nettle_random_prime): Rewritten. Uses the prime table for the
+	smallest sizes, then trial division using a new set of tables, and
+	then Maurer's algorithm, calling the new
+	_nettle_generate_pocklington_prime for the final search.
+
+2010-05-25  Niels Möller  <nisse@lysator.liu.se>
+
+	* testsuite/dsa-test.c (test_main): Updated for dsa testing
+	changes.
+
+	* testsuite/dsa-keygen-test.c (test_main): Test dsa256.
+
+	* testsuite/testutils.h (struct nettle_mac): New struct, currently
+	unused.
+
+	* testsuite/testutils.c (test_mac): New function (currently not
+	used).
+	(test_dsa): Replaced by two new functions...
+	(test_dsa160): New function.
+	(test_dsa256): New function.
+	(test_dsa_key): New argument q_size.
+	(DSA_VERIFY): Generalized.
+
+	* dsa-keygen.c (dsa_generate_keypair): Rewritten, now generating
+	primes using Pocklington's theorem. Takes both p_size and q_size
+	as arguments.
+
+2010-05-20  Niels Möller  <nisse@lysator.liu.se>
+
+	* bignum-random-prime.c (miller_rabin_pocklington): Fixed broken
+	logic when Miller-rabin succeeds early.
+
+2010-04-09  Niels Möller  <nisse@lysator.liu.se>
+
+	* bignum-next-prime.c: Include stdlib.h, needed for alloca on
+	freebsd.
+	* hmac.c: Likewise.
+
+	* examples/Makefile.in (SOURCES): Added random-prime.c.
+
+	* examples/random-prime.c: New program.
+
+	* testsuite/Makefile.in (TS_NETTLE_SOURCES): Moved
+	knuth-lfib-test.c, cbc-test.c, ctr-test.c, hmac-test.c here, from
+	TS_HOGWEED_SOURCES.
+	(TS_HOGWEED_SOURCES): Added random-prime-test.c.
+
+	* testsuite/random-prime-test.c: New test case.
+
+	* examples/next-prime.c (main): With no command line arguments.
+	exit after dislaying usage message.
+
+	* examples/io.c (simple_random): Free buffer when done.
+
+	* configure.ac: Changed message, say CC is the recommended
+	way to configure the ABI.
+
+	* bignum-random.c: Deleted test of HAVE_LIBGMP.
+	* bignum.c: Likewise.
+	* sexp2bignum.c: Likewise.
+
+	* Makefile.in (hogweed_SOURCES): Added bignum-random-prime.c.
+
+	* bignum-random-prime.c (nettle_random_prime): New file, new
+	function.
+
+2010-03-31  Niels Möller  <nisse@lysator.liu.se>
+
+	* examples/nettle-benchmark.c (main): Benchmark sha224.
+
+2010-03-30  Niels Möller  <nisse@lysator.liu.se>
+
+	* testsuite/testutils.c (DSA_VERIFY): Updated for dsa_sha1_verify
+	rename.
+	(test_dsa): Check return value from dsa_sha1_sign.
+
+	* Makefile.in (hogweed_SOURCES): Added dsa-sha1-sign.c,
+	dsa-sha1-verify.c, dsa-sha256-sign.c, and dsa-sha256-verify.c.
+
+	* dsa.h: Updated and added dsa declarations.
+
+	* dsa-sha256-verify.c (dsa_sha256_verify_digest): New file, new
+	function.
+	(dsa_sha256_verify): New function.
+	* dsa-sha256-sign.c (dsa_sha256_sign_digest): New file, new
+	function.
+	(dsa_sha256_sign): New function.
+
+	* dsa-sha1-verify.c (dsa_sha1_verify_digest): New file. Moved and
+	renamed function, from dsa_verify_digest, rewrote to use
+	_dsa_verify.
+	(dsa_sha1_verify): Analogous change, renamed from dsa_verify.
+	* dsa-sha1-sign.c (dsa_sha1_sign_digest): New file. Moved and
+	renamed function, from dsa_sign_digest, rewrote to use _dsa_sign,
+	and added return value.
+	(dsa_sha1_sign): Analogous change, renamed from dsa_sign.
+
+	* dsa-verify.c (_dsa_verify): New general verification function,
+	for any hash.
+	* dsa-sign.c (_dsa_sign): New general signing function, for any
+	hash. Returns success code, like the rsa signture functions.
+
+2010-03-29  Niels Möller  <nisse@lysator.liu.se>
+
+	* configure.ac (ABI): Attempt to use a better, ABI-dependant,
+	default value for libdir.
+
+	* x86/md5-compress.asm: Fixed function name in epilogue.
+
+	* asm.m4 (EPILOGUE): Use . to refer to current address.
+
+	* configure.ac (ABI): Detect which ABI the compiler is using.
+	On x86_64, also check for __arch64__.
+
+2010-03-28  Niels Möller  <nisse@lysator.liu.se>
+
+	* configure.ac (asm_path): For x86_64, check if compiler is
+	generating 32-bit code.
+
+2010-03-27  Niels Möller  <nisse@lysator.liu.se>
+
+	* testsuite/hmac-test.c (test_main): Rewrote rest of tests to use
+	HMAC_TEST, and added more tests from Daniel Kahn Gillmor and from
+	RFC 4231.
+
+	* Makefile.in (nettle_SOURCES): Added hmac-sha224.c and
+	hmac-sha384.c.
+
+	* hmac.h: Added declarations of hmac-sha224 and hmac-sha384.
+
+	* hmac-sha224.c: New file.
+
+2010-03-26  Niels Möller  <nisse@lysator.liu.se>
+
+	* testsuite/hmac-test.c (HMAC_TEST): New macro.
+	(test_main): Use HMAC_TEST for the md5 and sha1 tests, and add
+	test vectors from Daniel Kahn Gillmor.
+
+	* testsuite/Makefile.in (TS_NETTLE_SOURCES): Added sha224-test.c.
+
+	* Makefile.in (nettle_SOURCES): Added sha224-meta.c and
+	write-be32.c.
+	(DISTFILES): Added nettle-write.h.
+
+	* sha.h: Added declarations for sha224. Some are aliases for the
+	corresponding sha256 definition.
+
+	* sha256.c (sha256_digest): Use _nettle_write_be32.
+	(sha224_init): New function.
+	(sha224_digest): New function.
+
+	* sha1.c (sha1_digest): Use _nettle_write_be32.
+
+	* nettle-internal.h (NETTLE_MAX_HASH_BLOCK_SIZE)
+	(NETTLE_MAX_HASH_DIGEST_SIZE): Increased, to take sha512 into
+	account.
+
+	* nettle-write.h: New file.
+
+	* write-be32.c (_nettle_write_be32): New file, new function.
+
+	* sha224-meta.c: New file.
+
+2010-03-25  Niels Möller  <nisse@lysator.liu.se>
+
+	* hmac-sha384.c: New file.
+
+	* testsuite/sha224-test.c: New file.
+
+	* testsuite/md4-test.c (test_main): More test vectors, provided by
+	Daniel Kahn Gillmor.
+	* testsuite/md5-test.c (test_main): Likewise.
+	* testsuite/sha1-test.c (test_main): Likewise.
+	* testsuite/sha256-test.c (test_main): Likewise.
+	* testsuite/sha384-test.c (test_main): Likewise.
+	* testsuite/sha512-test.c (test_main): Likewise.
+
+	* configure.ac: Bumped version numbers. Package version
+	nettle-2.1, library versions libnettle.so.3.1, libhogweed.so.2.0.
+
+	* examples/nettle-benchmark.c (main): Benchmark sha384.
+
+	* testsuite/Makefile.in (TS_NETTLE_SOURCES): Added sha384-test.c.
+
+	* testsuite/sha384-test.c: New file.
+
+	* Makefile.in (nettle_SOURCES): Added sha384-meta.c.
+
+	* sha384-meta.c: New file.
+
+	* sha.h: Added declarations for sha384. Some are aliases for the
+	corresponding sha512 definition.
+
+	* sha512.c (sha512_write_digest): New function.
+	(sha512_digest): Use it.
+	(sha384_init): New function.
+	(sha384_digest): New function.
+
+2010-03-24  Niels Möller  <nisse@lysator.liu.se>
+
+	* sha512.c: (sha512_digest): Simplified handling of any final
+	partial word of the digest.
+
+	* sha512.c: Reorganized to use _nettle_sha512_compress.
+
+	* sha512-compress.c (_nettle_sha512_compress): Compression
+	function extracted from sha512.c to a new file.
+
+	* Makefile.in (nettle_SOURCES): Added sha256-compress.c and
+	sha512-compress.c.
+
+	* sha256.c: Reorganized to use _nettle_sha256_compress.
+
+	* sha256-compress.c (_nettle_sha256_compress): Compression
+	function extracted from sha256.c to a new file.
+
+	* examples/nettle-benchmark.c (main): Benchmark sha512.
+
+	* rsa-keygen.c (rsa_generate_keypair): Ensure that bit size of e
+	is less than bit size of n, and check for the unlikely case p = q.
+
+	* rsa.h (RSA_MINIMUM_N_OCTETS, RSA_MINIMUM_N_BITS): Reduced, to
+	correspond to pkcs#1 encryption of single byte messagees.
+
+	* pgp-encode.c (pgp_put_rsa_sha1_signature): Check return value
+	from rsa_sha1_sign.
+	* rsa-compat.c (R_SignFinal): Likewise.
+
+	* rsa-md5-sign.c (rsa_md5_sign): Check and propagate return value
+	from pkcs1_rsa_md5_encode.
+	(rsa_md5_sign_digest): Check and propagate return value from
+	pkcs1_rsa_md5_encode_digest.
+	* rsa-md5-verify.c (rsa_md5_verify): Check return value from
+	pkcs1_rsa_md5_encode.
+	(rsa_md5_verify_digest): Check return value from
+	pkcs1_rsa_md5_encode_digest.
+	* rsa-sha1-sign.c: Analogous changes.
+	* rsa-sha1-verify.c: Analogous changes.
+	* rsa-sha256-sign.c: Analogous changes.
+	* rsa-sha256-verify.c: Analogous changes.
+	* rsa-sha512-sign.c: Analogous changes.
+	* rsa-sha512-verify.c: Analogous changes.
+
+	* pkcs1-rsa-md5.c (pkcs1_rsa_md5_encode)
+	(pkcs1_rsa_md5_encode_digest): Added return value. Check and
+	propagate return value from pkcs1_signature_prefix.
+	* pkcs1-rsa-sha256.c (pkcs1_rsa_sha256_encode)
+	(pkcs1_rsa_sha256_encode_digest): Likewise.
+	* pkcs1-rsa-sha1.c (pkcs1_rsa_sha1_encode)
+	(pkcs1_rsa_sha1_encode_digest): Likewise.
+	* pkcs1-rsa-sha512.c (pkcs1_rsa_sha512_encode)
+	(pkcs1_rsa_sha512_encode_digest): Likewise.
+
+	* pkcs1.c (pkcs1_signature_prefix): Interface change, take both
+	the total size and digest size as arguments, and return a status
+	code to say if the size was large enough.
+
+	* testsuite/Makefile.in: Added hogweed dependency for the test
+	programs.
+
+2010-03-23  Niels Möller  <nisse@lysator.liu.se>
+
+	* testsuite/rsa-test.c (test_main): Test signing with sha512.
+
+	* testsuite/testutils.c (test_rsa_sha512): New function.
+
+	* Makefile.in (hogweed_SOURCES): Added pkcs1-rsa-sha512.c,
+	rsa-sha512-sign.c and rsa-sha512-verify.c.
+
+	* rsa.h: Added prototypes for sha512-related functions.
+	(RSA_MINIMUM_N_OCTETS, RSA_MINIMUM_N_BITS): Increased.
+	* pkcs1.h: Added prototypes for sha512-related functions.
+
+	* rsa-sha512-verify.c: New file.
+	* rsa-sha512-sign.c: New file.
+	* pkcs1-rsa-sha512.c: New file.
+
+2010-03-22  Niels Möller  <nisse@lysator.liu.se>
+
+	* Makefile.in (nettle_SOURCES): Added hmac-sha512.c.
+
+	* testsuite/hmac-test.c (test_main): Added test cases for
+	hmac-sha512.
+
+	* hmac.h: Declare functions sha512-related functions.
+	* hmac-sha512.c (hmac_sha512_set_key): New file.
+
+	Basic sha512 support.
+	* testsuite/Makefile.in (TS_NETTLE_SOURCES): Added sha512-test.c.
+	* testsuite/sha512-test.c: New file.
+
+	* macros.h (READ_UINT64, WRITE_UINT64): New macros.
+
+	* Makefile.in (nettle_SOURCES): Added sha512.c and sha512-meta.c.
+	* sha.h: Added sha512-related declarations.
+	* nettle-meta.h: Likewise.
+	* sha512-meta.c: New file.
+	* sha512.c: New file.
+
+2010-03-06  Niels Möller  <nisse@lysator.liu.se>
+
+	* Makefile.in (distdir): Include x86_64 assembler files.
+
+2010-01-20  Niels Möller  <nisse@lysator.liu.se>
+
+	* configure.ac: Check for mpz_powm_sec.
+
+2010-01-13  Niels Möller  <nisse@lysator.liu.se>
+
+	* Makefile.in ($(LIBHOGWEED_FORLINK)): Depend on
+	$(LIBNETTLE_FORLINK).
+
+	* configure.ac (LIBHOGWEED_LIBS): Added -lnettle -lgmp for the
+	default case. Follows debian, and also makes dlopen of
+	libhogweed.so work, without having to use RTLD_GLOBAL.
+	(LIBHOGWEED_LINK): Added -L., to find our libnettle.so.
+
+2009-10-21  Niels Möller  <nisse@lysator.liu.se>
+
+	* tools/Makefile.in (pkcs1-conv$(EXEEXT)): Added dependency on
+	../libhogweed.a.
+
+2009-10-19  Niels Möller  <nisse@lysator.liu.se>
+
+	* tools/pkcs1-conv.c: Updated for dsa/der interface change.
+
+	* der2dsa.c (dsa_public_key_from_der_iterators): Split into two
+	new functions...
+	(dsa_params_from_der_iterator): New function.
+	(dsa_public_key_from_der_iterator): New function.
+	(dsa_openssl_private_key_from_der_iterator): Renamed, was
+	dsa_private_key_from_der_iterator.
+	(dsa_openssl_private_key_from_der): Likewise.
+	* dsa.h: Corresponding changees to prototypes and #defines.
+
+2009-10-12  Niels Möller  <nisse@lysator.liu.se>
+
+	* sexp-format.c: Removed conditioning on HAVE_LIBGMP.
+
+	* tools/pkcs1-conv.c: Support for DSA keys, contributed by Magnus
+	Holmgren.
+
+	* Makefile.in (hogweed_SOURCES): Added dsa2sexp.c and der2dsa.c.
+
+	* der2dsa.c: New file, contributed by Magnus Holmgren.
+	* dsa2sexp.c: Likewise.
+	* dsa.h: Added prototypes.
+
+	* configure.ac (LIBHOGWEED_MINOR): Bumped libhogweed minor
+	version, now it's 1.1.
+
+	* testsuite/rsa2sexp-test.c (test_main): Updated testcase for
+	"rsa-pkcs1".
+
+2009-10-11  Niels Möller  <nisse@lysator.liu.se>
+
+	* rsa2sexp.c (rsa_keypair_to_sexp): Changed default algorithm name
+	to "rsa-pkcs1".
+
+2009-09-20  Niels Möller  <nisse@lysator.liu.se>
+
+	* x86/sha1-compress.asm: Improved performance by 17% on AMD K7,
+	by letting loopmix scramble the instruction order.
+
+2009-09-15  Niels Möller  <nisse@lysator.liu.se>
+
+	* x86/sha1-compress.asm: Cleanup, removing old cruft. Slight
+	improvement to ROUND_F1_NOEXP. Slight reduction of
+	dependency-chains.
+
+2009-08-25  Niels Möller  <nisse@lysator.liu.se>
+
+	* x86/sha1-compress.asm: Eliminated tmp variable for f3 rounds.
+
+	* examples/nettle-benchmark.c (bench_sha1_compress): New function,
+	for precise benchmarking of the compression function.
+
 2009-06-08  Niels Möller  <nisse@lysator.liu.se>
 
 	* Released nettle-2.0.
@@ -34,7 +1591,7 @@
 	Put SA--SD in %eax--%edx, so the second byte can be accessed as
 	%ah-%dh. TD is not needed, SD can be reused. Use the register that
 	is saved for the outer loop counter, getting it off the stack.
-	* x86_64/aes-encrypt-internal.asm: Likewise.	
+	* x86_64/aes-encrypt-internal.asm: Likewise.
 
 	* x86_64/aes.m4 (HREG, MOVE_HREG): New macros.
 	(XREG): Fixed bug in handling of %r8 and %r9.
@@ -155,7 +1712,7 @@
 
 	* x86/aes-encrypt-internal.asm: Updated use of AES_SUBST_BYTE. USe
 	decl for outer loop.
-	* x86/aes-decrypt-internal.asm: Likewise.	
+	* x86/aes-decrypt-internal.asm: Likewise.
 
 	* x86/aes.m4 (LREG, HREG): New macros.
 	(AES_SUBST_BYTE): Take state registers as argument. Use LREG to
@@ -173,7 +1730,7 @@
 	* Makefile.in (stamp-h.in): Use $(AUTOHEADER).
 
 	* x86_64/sha1-compress.asm: New x86_64 assembler, based on the x86
-	version.	
+	version.
 
 	* configure.ac (asm_path): Set up asm_path for x86_64.
 
@@ -188,7 +1745,7 @@
 
 	* testsuite/sexp-conv-test (print_raw, print_nl): Use printf.
 	Updated testcases with comments; comments are now preserved.
-	
+
 	* tools/sexp-conv.c (sexp_convert_item): Keep comments in advanced
 	output.
 	(parse_options): New --lock option.
@@ -279,7 +1836,7 @@
 2007-06-02  Niels Möller  <nisse@lysator.liu.se>
 
 	* Makefile.in: Typo fixes to install targets, spotted by Magnus
-	Holmgren. 
+	Holmgren.
 
 2007-05-14  Niels Möller  <niels@s3.kth.se>
 
@@ -302,7 +1859,7 @@
 
 	* C source files: Don't use WITH_PUBLIC_KEY / WITH_HOGWEED, the
 	Makefile sorts out which files should be compiled.
-	
+
 	* pgp.h: Include bignum.h, don't pretend to work without bignums.
 
 	* pgp-encode.c (pgp_put_mpi, pgp_put_public_rsa_key)
@@ -325,14 +1882,14 @@
 
 	* testsuite/Makefile.in (TS_NETTLE_SOURCES, TS_HOGWEED_SOURCES):
 	Separate test cases using nettle and those also using hogweed.
-	
+
 2007-04-05  Niels Möller  <nisse@lysator.liu.se>
 
 	* Moved in CVS tree. Also renamed directory sparc to sparc32.
 
 2007-02-24  Niels Möller  <nisse@lysator.liu.se>
 
-	* Makefile.in (clean-here): Remove .lib directory. 
+	* Makefile.in (clean-here): Remove .lib directory.
 	(distclean-here): Remove machine.m4.
 
 2006-12-05  Niels Möller  <nisse@lysator.liu.se>
@@ -371,7 +1928,7 @@
 	gold-bug.txt.
 
 	* rsa.h (rsa_sha256_sign, rsa_sha256_verify)
-	(rsa_sha256_sign_digest, rsa_sha256_verify_digest): New declarations. 
+	(rsa_sha256_sign_digest, rsa_sha256_verify_digest): New declarations.
 	(RSA_MINIMUM_N_OCTETS, RSA_MINIMUM_N_BITS): Increased to
 	62 octets and  489 bits, respectively, for supporting sha256.
 
@@ -447,48 +2004,48 @@
 
 2006-05-16  Niels Möller  <niels@s3.kth.se>
 	Merged from the lsh experimental branch.
-	
+
 2006-04-26  Niels Möller  <nisse@lysator.liu.se>
 
-        * examples/rsa-decrypt.c: Don't include "getopt.h", since it's not used.
-        * examples/nettle-benchmark.c: Include "getopt.h".
+	* examples/rsa-decrypt.c: Don't include "getopt.h", since it's not used.
+	* examples/nettle-benchmark.c: Include "getopt.h".
 
-        * examples/Makefile.in (GETOPT_OBJS): New variable.
-        (rsa-keygen, rsa-encrypt, nettle-benchmark): Depend on and link
-        with $(GETOPT_OBJS).
+	* examples/Makefile.in (GETOPT_OBJS): New variable.
+	(rsa-keygen, rsa-encrypt, nettle-benchmark): Depend on and link
+	with $(GETOPT_OBJS).
 
-        * x86/aes-decrypt-internal.asm: Use ALIGN.
-        * x86/aes-encrypt-internal.asm: Likewise.
-        * x86/arcfour-crypt.asm: Likewise.
-        * x86/md5-compress.asm: Likewise.
-        * x86/sha1-compress.asm: Likewise.
+	* x86/aes-decrypt-internal.asm: Use ALIGN.
+	* x86/aes-encrypt-internal.asm: Likewise.
+	* x86/arcfour-crypt.asm: Likewise.
+	* x86/md5-compress.asm: Likewise.
+	* x86/sha1-compress.asm: Likewise.
 
-        * config.m4.in (ASM_ALIGN_LOG): Substitute.
-        * configure.ac (ASM_ALIGN_LOG): Check if .align directive is
-        logarithmic.
-        * asm.m4 (ALIGN): New macro. Takes a logarithmic argument, and
-        expands to a .align directive.
+	* config.m4.in (ASM_ALIGN_LOG): Substitute.
+	* configure.ac (ASM_ALIGN_LOG): Check if .align directive is
+	logarithmic.
+	* asm.m4 (ALIGN): New macro. Takes a logarithmic argument, and
+	expands to a .align directive.
 
 2006-04-21  Niels Möller  <nisse@lysator.liu.se>
 
-        * nettle.texinfo (Public-key algorithms): Say that the public key
-        operations are undocumented, not unsupported. Reported by Jeronimo
-        Pellegrini. 
+	* nettle.texinfo (Public-key algorithms): Say that the public key
+	operations are undocumented, not unsupported. Reported by Jeronimo
+	Pellegrini.
 
 2006-04-08  Niels Möller  <nisse@lysator.liu.se>
 
-        * tools/pkcs1-conv.c (read_pem): Fixed c99-style declaration.
-        Reported by Henrik Grubbström.
+	* tools/pkcs1-conv.c (read_pem): Fixed c99-style declaration.
+	Reported by Henrik Grubbström.
 
 2006-01-31  Niels Möller  <niels@s3.kth.se>
 
-        * examples/rsa-verify.c: Fixed typo in usage message.
-	
+	* examples/rsa-verify.c: Fixed typo in usage message.
+
 2005-12-05  Niels Möller  <nisse@lysator.liu.se>
 
-        * configure.ac: Bumped version to 1.15,
+	* configure.ac: Bumped version to 1.15,
 
-        * Released nettle-1.14.
+	* Released nettle-1.14.
 
 	* NEWS: Updated for 1.14.
 
@@ -539,7 +2096,7 @@
 	executables, in addition to the suffix rules. Hopefully, this
 	should make all of GNU make, BSD make and Solaris make happy.
 	Use $(EXEEXT) and $(OBJEXT) more consistently.
-	
+
 	* examples/Makefile.in: Use explicit rules for all executable
 	targets. Use $(EXEEXT) and $(OBJEXT) more consistently.
 
@@ -562,7 +2119,7 @@
 2005-11-21  Niels Möller  <nisse@lysator.liu.se>
 
 	* testsuite/testutils.c (main): Fixed check for -v option. Spotted
-	by Goran K. 
+	by Goran K.
 
 2005-11-21  Niels Möller  <niels@s3.kth.se>
 
@@ -588,14 +2145,14 @@
 
 	* rsa.h (rsa_public_key_from_der_iterator)
 	(rsa_private_key_from_der_iterator, rsa_keypair_from_der): Declare
-	functions. 
+	functions.
 
 	* der2rsa.c: New file.
 
 	* der-iterator.c (asn1_der_iterator_init): Initialize length and
 	data.
 	(asn1_der_iterator_next): Support for lengths >= 0x80.
-	(asn1_der_decode_constructed_last, asn1_der_decode_bitstring) 
+	(asn1_der_decode_constructed_last, asn1_der_decode_bitstring)
 	(asn1_der_decode_bitstring_last): New functions.
 	(asn1_der_get_bignum): Check for non-mininal encodings.
 
@@ -628,7 +2185,7 @@
 	assembler path. Use $host_os, not uname, when setting up shared
 	library flags.
 
-	* Makefile.in (des.$(OBJEXT)): Use OBJEXT. 
+	* Makefile.in (des.$(OBJEXT)): Use OBJEXT.
 
 	* config.guess, config.sub: In the CVS tree, moved files to the
 	lsh top-level directory.
@@ -636,7 +2193,7 @@
 2005-10-23  Niels Möller  <nisse@lysator.liu.se>
 
 	* sparc64/arcfour-crypt.asm: New file, almost the same as
-	sparc/arcfour-crypt.asm. 
+	sparc/arcfour-crypt.asm.
 
 	* examples/nettle-benchmark.c (display): Use two decimal places.
 
@@ -689,7 +2246,7 @@
 2005-10-17  Niels Möller  <niels@s3.kth.se>
 
 	* aes-internal.h (struct aes_table): Deleted idx and sparc_idx
-	arrays. 
+	arrays.
 	* aes-encrypt-table.c (_aes_encrypt_table): Likewise.
 	* aes-decrypt.c (_aes_decrypt_table): Likewise.
 	* asm.m4 (AES): Likewise
@@ -699,7 +2256,7 @@
 	* tools/input.c (sexp_get_char): Use unsigned for the done flag.
 
 	* sparc64/aes-encrypt-internal.asm: Include sparc/aes.m4.
-	* sparc64/aes-decrypt-internal.asm: Likewise.	
+	* sparc64/aes-decrypt-internal.asm: Likewise.
 
 	* sparc64/machine.m4: Use .register pseudo op to say that we use
 	%g2 and %g3 as scratch registers.
@@ -1005,7 +2562,7 @@
 	HAVE_LIBCRYPTO. Benchmark openssl's aes and arcfour code.
 
 	* examples/nettle-openssl.c: Updated openssl des glue to use the
-	new openssl DES interface. Added glue for arcfour and aes.
+	new openssl des interface. Added glue for arcfour and aes.
 
 2005-09-27  Niels Möller  <nisse@lysator.liu.se>
 
@@ -1912,7 +3469,7 @@
 
 	* Makefile.am (libnettle_a_SOURCES): Added hmac-sha256.c.
 
-	* testsuite/hmac-test.c (test_main): Added tests for hmac-256,
+	* testsuite/hmac-test.c (test_main): Added tests for hmac-sha256,
 	from draft-ietf-ipsec-ciph-sha-256-01.txt.
 
 	* hmac-sha256.c (hmac_sha256_digest): New file.
@@ -3113,7 +4670,7 @@
 	registers at all.
 
 	* sparc/aes.asm (AES_FINAL_ROUND): New macro.
-	(_aes_crypt): Use AES_FINAL_ROUND for the first word if the final
+	(_aes_crypt): Use AES_FINAL_ROUND for the first word of the final
 	round.
 	(_aes_crypt): And for the rest of the final round.
 	(AES_FINAL_ROUND): Don't update dst, just access it offseted by i.
@@ -4032,16 +5589,16 @@
 
 	* yarrow256.c: New file, implementing Yarrow. Work in progress.
 
-	* sha256.c: New file, implementing SHA-256.
+	* sha256.c: New file, implementing sha256.
 
 	* testsuite/Makefile.am (CFLAGS): Added sha256-test.
 
-	* testsuite/sha256-test.m4: New testcases for SHA-256.
+	* testsuite/sha256-test.m4: New testcases for sha256.
 
-	* shadata.c: New file, for generating SHA-256 constants.
+	* shadata.c: New file, for generating sha256 constants.
 
 	* sha.h: Renamed sha1.h to sha.h, and added declarations for
-	SHA-256.
+	sha256.
 
 2001-10-05  Niels Möller  <nisse@ehand.com>
 
@@ -4304,7 +5861,7 @@
 
 	* testsuite/des-test.m4: New file.
 
-	* Added SHA1 files.
+	* Added sha1 files.
 
 	* Added desCore files.
 

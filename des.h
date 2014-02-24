@@ -45,6 +45,7 @@ extern "C" {
 #define des_set_key nettle_des_set_key
 #define des_encrypt nettle_des_encrypt
 #define des_decrypt nettle_des_decrypt
+#define des_check_parity nettle_des_check_parity
 #define des_fix_parity nettle_des_fix_parity
 #define des3_set_key nettle_des3_set_key
 #define des3_encrypt nettle_des3_encrypt
@@ -56,16 +57,12 @@ extern "C" {
 /* Expanded key length */
 #define _DES_KEY_LENGTH 32
 
-enum des_error { DES_OK, DES_BAD_PARITY, DES_WEAK_KEY };
-
 struct des_ctx
 {
   uint32_t key[_DES_KEY_LENGTH];
-  enum des_error status;
 };
 
-/* On success, returns 1 and sets ctx->status to DES_OK (zero). On
- * error, returns 0 and sets ctx->status accordingly. */
+/* Returns 1 for good keys and 0 for weak keys. */
 int
 des_set_key(struct des_ctx *ctx, const uint8_t *key);
 
@@ -78,6 +75,9 @@ des_decrypt(const struct des_ctx *ctx,
 	    unsigned length, uint8_t *dst,
 	    const uint8_t *src);
 
+int
+des_check_parity(unsigned length, const uint8_t *key);
+
 void
 des_fix_parity(unsigned length, uint8_t *dst,
 	       const uint8_t *src);
@@ -88,12 +88,10 @@ des_fix_parity(unsigned length, uint8_t *dst,
 struct des3_ctx
 {
   struct des_ctx des[3];
-  enum des_error status;
 };
 
 
-/* On success, returns 1 and sets ctx->status to DES_OK (zero). On
- * error, returns 0 and sets ctx->status accordingly. */
+/* Returns 1 for good keys and 0 for weak keys. */
 int
 des3_set_key(struct des3_ctx *ctx, const uint8_t *key);
 

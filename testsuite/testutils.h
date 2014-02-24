@@ -22,6 +22,9 @@
 
 #include "nettle-meta.h"
 
+/* Forward declare */
+struct nettle_aead;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -50,6 +53,35 @@ test_main(void);
 
 extern int verbose;
 
+/* FIXME: When interface stabilizes, move to nettle-meta.h */
+struct nettle_mac
+{
+  const char *name;
+
+  /* Size of the context struct */
+  unsigned context_size;
+
+  /* Size of digests */
+  unsigned digest_size;
+
+  /* Suggested key size; other sizes are sometimes possible. */
+  unsigned key_size;
+  
+  nettle_set_key_func *set_key;
+  nettle_hash_update_func *update;
+  nettle_hash_digest_func *digest;
+};
+
+#define _NETTLE_HMAC(name, NAME, keysize) {	\
+  #name,					\
+  sizeof(struct hmac_##name##_ctx),		\
+  NAME##_DIGEST_SIZE,				\
+  NAME##_DIGEST_SIZE,				\
+  hmac_##name##_set_key,			\
+  hmac_##name##_update,				\
+  hmac_##name##_digest,				\
+}
+ 
 void
 test_cipher(const struct nettle_cipher *cipher,
 	    unsigned key_length,
@@ -85,6 +117,19 @@ test_cipher_stream(const struct nettle_cipher *cipher,
 		   const uint8_t *ciphertext);
 
 void
+test_aead(const struct nettle_aead *aead,
+	  unsigned key_length,
+	  const uint8_t *key,
+	  unsigned auth_length,
+	  const uint8_t *authtext,
+	  unsigned length,
+	  const uint8_t *cleartext,
+	  const uint8_t *ciphertext,
+	  unsigned iv_length,
+	  const uint8_t *iv,
+	  const uint8_t *digest);
+
+void
 test_hash(const struct nettle_hash *hash,
 	  unsigned length,
 	  const uint8_t *data,
@@ -95,6 +140,12 @@ test_hash_large(const struct nettle_hash *hash,
 		unsigned count, unsigned length,
 		uint8_t c,
 		const uint8_t *digest);
+
+void
+test_mac(const struct nettle_mac *mac,
+	 unsigned key_length, const uint8_t *key,
+	 unsigned msg_length, const uint8_t *msg,
+	 const uint8_t *digest);
 
 void
 test_armor(const struct nettle_armor *armor,
@@ -123,16 +174,28 @@ test_rsa_sha256(struct rsa_public_key *pub,
 		mpz_t expected);
 
 void
+test_rsa_sha512(struct rsa_public_key *pub,
+		struct rsa_private_key *key,
+		mpz_t expected);
+
+void
 test_rsa_key(struct rsa_public_key *pub,
 	     struct rsa_private_key *key);
 
 void
-test_dsa(const struct dsa_public_key *pub,
-	 const struct dsa_private_key *key);
+test_dsa160(const struct dsa_public_key *pub,
+	    const struct dsa_private_key *key,
+	    const struct dsa_signature *expected);
+
+void
+test_dsa256(const struct dsa_public_key *pub,
+	    const struct dsa_private_key *key,
+	    const struct dsa_signature *expected);
 
 void
 test_dsa_key(struct dsa_public_key *pub,
-	     struct dsa_private_key *key);
+	     struct dsa_private_key *key,
+	     unsigned q_size);
 
 #endif /* WITH_HOGWEED */
 

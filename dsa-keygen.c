@@ -27,223 +27,99 @@
 # include "config.h"
 #endif
 
+#include <assert.h>
 #include <stdlib.h>
 
 #include "dsa.h"
 
 #include "bignum.h"
-#include "memxor.h"
 #include "nettle-internal.h"
 
-/* The (slow) NIST method of generating DSA primes. Algorithm 4.56 of
- * Handbook of Applied Cryptography. */
 
-#define SEED_LENGTH SHA1_DIGEST_SIZE
-#define SEED_BITS (SEED_LENGTH * 8)
-
-static void
-hash(mpz_t x, uint8_t *digest)
-{
-  mpz_t t;
-  uint8_t data[SEED_LENGTH];
-  struct sha1_ctx ctx;
-  
-  mpz_init_set(t, x);
-  mpz_fdiv_r_2exp(t, t, SEED_BITS);
-  
-  nettle_mpz_get_str_256(SEED_LENGTH, data, t);
-  mpz_clear(t);
-
-  sha1_init(&ctx);
-  sha1_update(&ctx, SEED_LENGTH, data);
-  sha1_digest(&ctx, SHA1_DIGEST_SIZE, digest);
-}
-
-static void
-dsa_nist_gen(mpz_t p, mpz_t q,
-	     void *random_ctx, nettle_random_func random,
-	     void *progress_ctx, nettle_progress_func progress,
-	     unsigned L)
-{
-  unsigned n;
-  unsigned b;
-  mpz_t s;
-  mpz_t t;
-  mpz_t c;
-
-  /* For NIS keysizes, we should have L = 512 + 64 * l */
-  n = (L-1) / 160; b = (L-1) % 160;
-
-  mpz_init(s);
-  mpz_init(t);
-  mpz_init(c);
-  
-  for (;;)
-    {
-      { /* Generate q */
-	uint8_t h1[SHA1_DIGEST_SIZE];
-	uint8_t h2[SHA1_DIGEST_SIZE];
-
-	if (progress)
-	  progress(progress_ctx, '.');
-	
-	nettle_mpz_random_size(s, random_ctx, random, SEED_BITS);
-	
-	hash(s, h1);
-	
-	mpz_set(t, s);
-	mpz_add_ui(t, t, 1);
-	
-	hash(t, h2);
-	
-	memxor(h1, h2, SHA1_DIGEST_SIZE);
-	
-	h1[0] |= 0x80;
-	h1[SHA1_DIGEST_SIZE - 1] |= 1;
-
-	nettle_mpz_set_str_256_u(q, SHA1_DIGEST_SIZE, h1);
-
-	/* The spec says that we should use 18 iterations of
-	 * miller-rabin. For performance, we want to do some trial
-	 * divisions first. The curent version of mpz_probab_prime_p
-	 * does exactly that. */
-	if (!mpz_probab_prime_p(q, 18))
-	  /* Try new seed. */
-	  continue;
-      }
-      /* q is a prime, with overwhelming probability. */
-
-      if (progress)
-	progress(progress_ctx, '\n');
-      
-      {
-	/* Official maximum key size: L = 1024 => n = 6 */
-	TMP_DECL(buffer, uint8_t, (6 + 1) * SHA1_DIGEST_SIZE);
-	unsigned size = (n+1) * SHA1_DIGEST_SIZE;
-	unsigned i, j;
-
-	TMP_ALLOC(buffer, size);
-	
-	for (i = 0, j = 2; i<4096; i++, j+= n+1)
-	  {
-	    unsigned k;
-
-	    if (progress)
-	      progress(progress_ctx, ',');
-	    for (k = 0; k<=n ; k++)
-	      {
-		mpz_set(t, s);
-		mpz_add_ui(t, t, j + k);
-		hash(t, buffer + ( (n-k) * SHA1_DIGEST_SIZE));
-	      }
-	    nettle_mpz_set_str_256_u(p, size, buffer);
-
-	    mpz_fdiv_r_2exp(p, p, L);
-	    mpz_setbit(p, L-1);
-
-	    mpz_set(t, q);
-	    mpz_mul_2exp(t, t, 1);
-
-	    mpz_fdiv_r(c, p, t);
-
-	    mpz_sub_ui(c, c, 1);
-
-	    mpz_sub(p, p, c);
-
-	    if (mpz_probab_prime_p(p, 5))
-	      {
-		/* Done! */
-		if (progress)
-		  progress(progress_ctx, '\n');
-		
-		mpz_clear(s);
-		mpz_clear(t);
-		mpz_clear(c);
-
-		return;
-	      }
-	  }
-	if (progress)
-	  progress(progress_ctx, '+');
-      }
-    }
-}
-
-static void
-dsa_find_generator(mpz_t g,
-		   void *random_ctx, nettle_random_func random,
-		   void *progress_ctx, nettle_progress_func progress,
-		   const mpz_t p, const mpz_t q)
-{
-  mpz_t e;
-  mpz_t n;
-  
-  /* e = (p-1)/q */
-  mpz_init_set(e, p);
-  mpz_sub_ui(e, e, 1);
-  mpz_divexact(e, e, q);
-
-  /* n = p-2 = |2, 3, ... p-1| */
-  mpz_init_set(n, p);
-  mpz_sub_ui(n, n, 2);
-
-  for (;;)
-    {
-      nettle_mpz_random(g, random_ctx, random, n);
-      mpz_add_ui(g, g, 2);
-
-      if (progress)
-	progress(progress_ctx, 'g');
-      mpz_powm(g, g, e, p);
-      
-      if (mpz_cmp_ui(g, 1))
-	{
-	  /* g != 1. Finished. */
-	  if (progress)
-	    progress(progress_ctx, '\n');
-
-	  mpz_clear(e);
-	  mpz_clear(n);
-
-	  return;
-	}
-    }
-}
-
+/* Valid sizes, according to FIPS 186-3 are (1024, 160), (2048. 224),
+   (2048, 256), (3072, 256). Currenty, we use only q_bits of 160 or
+   256. */
 int
 dsa_generate_keypair(struct dsa_public_key *pub,
 		     struct dsa_private_key *key,
 		     void *random_ctx, nettle_random_func random,
 		     void *progress_ctx, nettle_progress_func progress,
-		     /* Size of key, in bits.
-		      * Use size = 512 + 64 * l for the official
-		      * NIS key sizes. */
-		     unsigned bits)
+		     unsigned p_bits, unsigned q_bits)
 {
-  mpz_t t;
-  
-  if (bits < DSA_MIN_P_BITS)
-    return 0;
-  
-  dsa_nist_gen(pub->p, pub->q,
-	       random_ctx, random,
-	       progress_ctx, progress,
-	       bits);
-  
-  dsa_find_generator(pub->g,
-		     random_ctx, random,
-		     progress_ctx, progress,
-		     pub->p, pub->q);
+  mpz_t p0, p0q, r;
+  unsigned p0_bits;
+  unsigned a;
 
-  mpz_init_set(t, pub->q);
-  mpz_sub_ui(t, t, 2);
-  nettle_mpz_random(key->x, random_ctx, random, t);
+  switch (q_bits)
+    {
+    case 160:
+      if (p_bits < DSA_SHA1_MIN_P_BITS)
+	return 0;
+      break;
+    case 256:
+      if (p_bits < DSA_SHA256_MIN_P_BITS)
+	return 0;
+      break;
+    default:
+      return 0;
+    }
+
+  mpz_init (p0);
+  mpz_init (p0q);
+  mpz_init (r);
+
+  nettle_random_prime (pub->q, q_bits, 0, random_ctx, random,
+		       progress_ctx, progress);
+
+  p0_bits = (p_bits + 3)/2;
+  
+  nettle_random_prime (p0, p0_bits, 0,
+		       random_ctx, random,
+		       progress_ctx, progress);
+
+  if (progress)
+    progress (progress_ctx, 'q');
+  
+  /* Generate p = 2 r q p0 + 1, such that 2^{n-1} < p < 2^n.
+   *
+   * We select r in the range i + 1 < r <= 2i, with i = floor (2^{n-2} / (p0 q). */
+
+  mpz_mul (p0q, p0, pub->q);
+
+  _nettle_generate_pocklington_prime (pub->p, r, p_bits, 0,
+				      random_ctx, random,
+				      p0, pub->q, p0q);
+
+  if (progress)
+    progress (progress_ctx, 'p');
+
+  mpz_mul (r, r, p0);
+
+  for (a = 2; ; a++)
+    {
+      mpz_set_ui (pub->g, a);
+      mpz_powm (pub->g, pub->g, r, pub->p);
+      if (mpz_cmp_ui (pub->g, 1) != 0)
+	break;
+    }
+
+  if (progress)
+    progress (progress_ctx, 'g');
+
+  mpz_set(r, pub->q);
+  mpz_sub_ui(r, r, 2);
+  nettle_mpz_random(key->x, random_ctx, random, r);
 
   mpz_add_ui(key->x, key->x, 1);
 
   mpz_powm(pub->y, pub->g, key->x, pub->p);
 
-  mpz_clear(t);
+  if (progress)
+    progress (progress_ctx, '\n');
+  
+  mpz_clear (p0);
+  mpz_clear (p0q);
+  mpz_clear (r);
 
   return 1;
 }

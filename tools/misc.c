@@ -48,8 +48,19 @@ werror(const char *format, ...)
   va_start(args, format);
   vfprintf(stderr, format, args);
   va_end(args);
+}
 
-  exit(EXIT_FAILURE);
+void *
+xalloc(size_t size)
+{
+  void *p = malloc(size);
+  if (!p)
+    {
+      fprintf(stderr, "Virtual memory exhausted.\n");
+      abort();
+    }
+
+  return p;
 }
 
 const char

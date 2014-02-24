@@ -85,6 +85,19 @@ void
 nettle_next_prime(mpz_t p, mpz_t n, unsigned count, unsigned prime_limit,
 		  void *progress_ctx, nettle_progress_func progress);
 
+void
+nettle_random_prime(mpz_t p, unsigned bits, int top_bits_set,
+		    void *ctx, nettle_random_func random,
+		    void *progress_ctx, nettle_progress_func progress);
+
+void
+_nettle_generate_pocklington_prime (mpz_t p, mpz_t r,
+				    unsigned bits, int top_bits_set, 
+				    void *ctx, nettle_random_func random, 
+				    const mpz_t p0,
+				    const mpz_t q,
+				    const mpz_t p0q);
+  
 /* sexp parsing */
 struct sexp_iterator;
 
@@ -99,7 +112,7 @@ struct asn1_der_iterator;
 
 int
 nettle_asn1_der_get_bignum(struct asn1_der_iterator *iterator,
-			   mpz_t x, unsigned limit);
+			   mpz_t x, unsigned max_bits);
 
 #ifdef __cplusplus
 }

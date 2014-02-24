@@ -71,7 +71,7 @@
 /***** Encryption Function *****/
 
 void
-cast128_encrypt(struct cast128_ctx *ctx,
+cast128_encrypt(const struct cast128_ctx *ctx,
 		unsigned length, uint8_t *dst,
 		const uint8_t *src)
 {
@@ -115,7 +115,7 @@ cast128_encrypt(struct cast128_ctx *ctx,
 /***** Decryption Function *****/
 
 void
-cast128_decrypt(struct cast128_ctx *ctx,
+cast128_decrypt(const struct cast128_ctx *ctx,
 		unsigned length, uint8_t *dst,
 		const uint8_t *src)
 {
@@ -178,6 +178,8 @@ cast128_set_key(struct cast128_ctx *ctx,
     if ((i*4+2) < keybytes) x[i] |= (uint32_t)rawkey[i*4+2] << 8;
     if ((i*4+3) < keybytes) x[i] |= (uint32_t)rawkey[i*4+3];
   }
+  /* FIXME: For the shorter key sizes, the last 4 subkeys are not
+     used, and need not be generatedd, nor stored. */
   /* Generate 32 subkeys, four at a time */
   for (i = 0; i < 32; i+=4) {
     switch (i & 4) {

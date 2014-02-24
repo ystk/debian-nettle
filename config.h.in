@@ -1,5 +1,8 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Define if building universal (internal helper macro) */
+#undef AC_APPLE_UNIVERSAL_BUILD
+
 /* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
    systems. This function is required for `alloca.c' support on those systems.
    */
@@ -14,6 +17,9 @@
 /* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
    */
 #undef HAVE_ALLOCA_H
+
+/* Define to 1 if you have the `clock_gettime' function */
+#undef HAVE_CLOCK_GETTIME
 
 /* Define if fcntl file locking is available */
 #undef HAVE_FCNTL_LOCKING
@@ -36,6 +42,9 @@
 /* Define to 1 if you have the `memxor' function. */
 #undef HAVE_MEMXOR
 
+/* Define if mpz_powm_sec is available (appeared in GMP-5) */
+#undef HAVE_MPZ_POWM_SEC
+
 /* Define to 1 if you have the <openssl/aes.h> header file. */
 #undef HAVE_OPENSSL_AES_H
 
@@ -53,6 +62,9 @@
 
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the `strerror' function. */
+#undef HAVE_STRERROR
 
 /* Define to 1 if you have the <strings.h> header file. */
 #undef HAVE_STRINGS_H
@@ -80,6 +92,9 @@
 
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
@@ -119,9 +134,17 @@
 /* Define if you have openssl's libcrypto (used for benchmarking) */
 #undef WITH_OPENSSL
 
-/* Define to 1 if your processor stores words with the most significant byte
-   first (like Motorola and SPARC, unlike Intel and VAX). */
-#undef WORDS_BIGENDIAN
+/* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
+   significant byte first (like Motorola and SPARC, unlike Intel). */
+#if defined AC_APPLE_UNIVERSAL_BUILD
+# if defined __BIG_ENDIAN__
+#  define WORDS_BIGENDIAN 1
+# endif
+#else
+# ifndef WORDS_BIGENDIAN
+#  undef WORDS_BIGENDIAN
+# endif
+#endif
 
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const
@@ -165,6 +188,13 @@ char *alloca ();
 #endif
 
 
+#if HAVE_STRERROR
+#define STRERROR strerror
+#else
+#define STRERROR(x) (sys_errlist[x])
+#endif
+
+
 #if __GNUC__ && HAVE_GCC_ATTRIBUTE
 # define NORETURN __attribute__ ((__noreturn__))
 # define PRINTF_STYLE(f, a) __attribute__ ((__format__ (__printf__, f, a)))
@@ -174,4 +204,8 @@ char *alloca ();
 # define PRINTF_STYLE(f, a)
 # define UNUSED
 #endif
+
+
+/* Needs include of <limits.h> before use. */
+#define HAVE_NATIVE_64_BIT (SIZEOF_LONG * CHAR_BIT >= 64)
 

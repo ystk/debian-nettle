@@ -2,7 +2,7 @@ dnl -*- mode: shell-script; sh-indentation: 2; -*-
 
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([nettle], [2.0], [nettle-bugs@lists.lysator.liu.se])
+AC_INIT([nettle], [2.4], [nettle-bugs@lists.lysator.liu.se])
 AC_PREREQ(2.61)
 AC_CONFIG_SRCDIR([arcfour.c])
 # Needed to stop autoconf from looking for files in parent directories.
@@ -10,11 +10,11 @@ AC_CONFIG_AUX_DIR([.])
 
 AC_CONFIG_HEADER([config.h])
 
-LIBNETTLE_MAJOR=3
-LIBNETTLE_MINOR=0
+LIBNETTLE_MAJOR=4
+LIBNETTLE_MINOR=3
 
-LIBHOGWEED_MAJOR=1
-LIBHOGWEED_MINOR=0
+LIBHOGWEED_MAJOR=2
+LIBHOGWEED_MINOR=1
 
 AC_CANONICAL_HOST
 
@@ -55,7 +55,11 @@ AC_ARG_ENABLE(pic,
 AC_ARG_ENABLE(openssl,
   AC_HELP_STRING([--disable-openssl], [Do not include openssl glue in the benchmark program]),,
   [enable_openssl=yes])
-  
+
+AC_ARG_ENABLE(gcov,
+  AC_HELP_STRING([--enable-gcov], [Instrument for gcov (requires a modern gcc)]),,
+  [enable_gcov=no])
+
 LSH_RPATH_INIT([`echo $with_lib_path | sed 's/:/ /g'` \
     `echo $exec_prefix | sed "s@^NONE@$prefix/lib@g" | sed "s@^NONE@$ac_default_prefix/lib@g"` \
     /usr/local/lib /sw/local/lib /sw/lib \
@@ -94,7 +98,7 @@ AC_CHECK_TOOL(NM, nm, strings)
 AC_CHECK_TOOL(OBJDUMP, objdump, false)
 
 if test "x$ac_cv_prog_cc_stdc" = xno ; then
-  AC_ERROR([the C compiler doesn't handle ANSI-C])
+  AC_ERROR([the C compiler doesn't handle ANSI-C]) #'
 fi
 
 AC_PROG_INSTALL
@@ -116,14 +120,20 @@ if test x$enable_dependency_tracking = xyes ; then
 ])
 fi
 
-# Select assembler code
-asm_path=
+# Figure out ABI. Currently, configurable only by setting CFLAGS.
+ABI=standard
+
 case "$host_cpu" in
-  [i?86* | k[5-8]* | pentium* | athlon])
-    asm_path=x86
-    ;;
   [x86_64 | amd64])
-    asm_path=x86_64
+    AC_TRY_COMPILE([
+#if defined(__x86_64__) || defined(__arch64__)
+#error 64-bit x86
+#endif
+    ], [], [
+      ABI=32
+    ], [
+      ABI=64
+    ])
     ;;
   *sparc*)
     AC_TRY_COMPILE([
@@ -131,16 +141,88 @@ case "$host_cpu" in
 #error 64-bit sparc
 #endif
     ], [], [
-      asm_path=sparc32
+      ABI=32
     ], [
-      asm_path=sparc64
+      ABI=64
     ])
-    ;;
-  *)
-    enable_assembler=no
     ;;
 esac
 
+if test "x$ABI" != xstandard ; then
+  AC_MSG_NOTICE([Compiler uses $ABI-bit ABI. To change, set CC.])
+  if test "$libdir" = '${exec_prefix}/lib' ; then
+    # Try setting a better default
+    case "$host_cpu:$host_os:$ABI" in
+      *:solaris*:32|*:sunos*:32)
+	libdir='${exec_prefix}/lib'
+	;;
+      *:solaris*:64|*:sunos*:64)
+	libdir='${exec_prefix}/lib/64'
+	;;
+      # Linux conventions are a mess... According to the Linux File
+      # Hierarchy Standard, all architectures except IA64 puts 32-bit
+      # libraries in lib, and 64-bit in lib64. Some distributions,
+      # e.g., Fedora and Gentoo, adhere to this standard, while at
+      # least Debian has decided to put 64-bit libraries in lib and
+      # 32-bit libraries in lib32.
+      
+      # We try to figure out the convention, except if we're cross
+      # compiling. We use lib${ABI} if /usr/lib${ABI} exists and
+      # appears to not be a symlink to a different name.
+      *:linux*:32|*:linux*:64)
+	if test "$cross_compiling" = yes ; then
+          AC_MSG_WARN([Cross compiling for linux. Can't guess if libraries go in lib${ABI} or lib.]); dnl '
+	else
+	  # The dash builtin pwd tries to be "helpful" and remember
+	  # symlink names. Use -P option, and hope it's portable enough.
+	  test -d /usr/lib${ABI} \
+	    && (cd /usr/lib${ABI} && pwd -P | grep >/dev/null "/lib${ABI}"'$') \
+	    && libdir='${exec_prefix}/'"lib${ABI}"
+	fi
+	;;
+      # On freebsd, it seems 32-bit libraries are in lib32,
+      # and 64-bit in lib. Don't know about "kfreebsd", does
+      # it follow the Linux fhs conventions?
+      *:freebsd*:32)
+	libdir='${exec_prefix}/lib32'
+	;;
+      *:freebsd*:64)
+	libdir='${exec_prefix}/lib'
+	;;
+      *)
+        AC_MSG_WARN([Don't know where to install $ABI-bit libraries on this system.]); dnl '
+
+    esac
+    AC_MSG_NOTICE([Libraries to be installed in $libdir.])
+  fi
+fi
+
+# Select assembler code
+asm_path=
+if test "x$enable_assembler" = xyes ; then
+  case "$host_cpu" in
+    [i?86* | k[5-8]* | pentium* | athlon])
+      asm_path=x86
+      ;;
+    [x86_64 | amd64])
+      if test "$ABI" = 64 ; then
+	asm_path=x86_64
+      else
+	asm_path=x86
+      fi
+      ;;
+    *sparc*)
+      if test "$ABI" = 64 ; then
+	asm_path=sparc64
+      else
+	asm_path=sparc32
+      fi
+      ;;
+    *)
+      enable_assembler=no
+      ;;
+  esac
+fi
 # echo "enable_assembler: $enable_assembler, asm_path: $asm_path"
 
 if test "x$enable_assembler" = xyes ; then
@@ -148,7 +230,10 @@ if test "x$enable_assembler" = xyes ; then
     AC_MSG_NOTICE([Looking for assembler files in $asm_path/.])
     found=no
     for tmp_f in aes-encrypt-internal.asm aes-decrypt-internal.asm \
-		 arcfour-crypt.asm md5-compress.asm sha1-compress.asm machine.m4; do
+		 arcfour-crypt.asm camellia-crypt-internal.asm \
+		 md5-compress.asm memxor.asm \
+		 serpent-encrypt.asm serpent-decrypt.asm \
+		 sha1-compress.asm machine.m4; do
 #       echo "Looking for $srcdir/$asm_path/$tmp_f"
       if test -f "$srcdir/$asm_path/$tmp_f"; then
 #        echo found
@@ -168,17 +253,30 @@ LSH_CCPIC
 SHLIBCFLAGS="$CCPIC"
 
 case "$host_os" in
+  mingw32*)
+    LIBNETTLE_FORLINK='libnettle-$(LIBNETTLE_MAJOR)-$(LIBNETTLE_MINOR).dll'
+    LIBNETTLE_SONAME=''
+    LIBNETTLE_FILE='libnettle.dll.a'
+    LIBNETTLE_LINK='$(CC) $(LDFLAGS) -shared -Wl,--out-implib=$(LIBNETTLE_FILE) -Wl,--export-all-symbols -Wl,--enable-auto-import -Wl,--whole-archive'
+    LIBNETTLE_LIBS='-Wl,--no-whole-archive $(LIBS)'
+
+    LIBHOGWEED_FORLINK='libhogweed-$(LIBHOGWEED_MAJOR)-$(LIBHOGWEED_MINOR).dll'
+    LIBHOGWEED_SONAME=''
+    LIBHOGWEED_FILE='libhogweed.dll.a'
+    LIBHOGWEED_LINK='$(CC) $(LDFLAGS) -shared -Wl,--out-implib=$(LIBHOGWEED_FILE) -Wl,--export-all-symbols -Wl,--enable-auto-import -Wl,--whole-archive'
+    LIBHOGWEED_LIBS='-Wl,--no-whole-archive $(LIBS) libnettle.dll.a'
+    ;;
   cygwin*)
     LIBNETTLE_FORLINK='cygnettle-$(LIBNETTLE_MAJOR)-$(LIBNETTLE_MINOR).dll'
     LIBNETTLE_SONAME=''
     LIBNETTLE_FILE='libnettle.dll.a'
-    LIBNETTLE_LINK='$(CC) $(LDFLAGS) -shared -Wl,--out-implib=$(LIBNETTLE_LIBFILE) -Wl,--export-all-symbols -Wl,--enable-auto-import -Wl,--whole-archive'
+    LIBNETTLE_LINK='$(CC) $(LDFLAGS) -shared -Wl,--out-implib=$(LIBNETTLE_FILE) -Wl,--export-all-symbols -Wl,--enable-auto-import -Wl,--whole-archive'
     LIBNETTLE_LIBS='-Wl,--no-whole-archive $(LIBS)'
 
     LIBHOGWEED_FORLINK='cyghogweed-$(LIBHOGWEED_MAJOR)-$(LIBHOGWEED_MINOR).dll'
     LIBHOGWEED_SONAME=''
     LIBHOGWEED_FILE='libhogweed.dll.a'
-    LIBHOGWEED_LINK='$(CC) $(LDFLAGS) -shared -Wl,--out-implib=$(LIBHOGWEED_LIBFILE) -Wl,--export-all-symbols -Wl,--enable-auto-import -Wl,--whole-archive'
+    LIBHOGWEED_LINK='$(CC) $(LDFLAGS) -shared -Wl,--out-implib=$(LIBHOGWEED_FILE) -Wl,--export-all-symbols -Wl,--enable-auto-import -Wl,--whole-archive'
     LIBHOGWEED_LIBS='-Wl,--no-whole-archive $(LIBS)'
     ;;
   darwin*)
@@ -194,6 +292,22 @@ case "$host_os" in
     LIBHOGWEED_LINK='$(CC) -dynamiclib $(LDFLAGS)'
     LIBHOGWEED_LIBS=''
     ;;
+  solaris*)
+    # Sun's ld uses -h to set the soname, and this option is passed
+    # through by both Sun's compiler and gcc. Might not work with GNU
+    # ld, but it's unusual to use GNU ld on Solaris.
+    LIBNETTLE_FORLINK=libnettle.so
+    LIBNETTLE_SONAME='$(LIBNETTLE_FORLINK).$(LIBNETTLE_MAJOR)'
+    LIBNETTLE_FILE='$(LIBNETTLE_SONAME).$(LIBNETTLE_MINOR)'
+    LIBNETTLE_LINK='$(CC) $(LDFLAGS) -G -h $(LIBNETTLE_SONAME)'
+    LIBNETTLE_LIBS=''
+
+    LIBHOGWEED_FORLINK=libhogweed.so
+    LIBHOGWEED_SONAME='$(LIBHOGWEED_FORLINK).$(LIBHOGWEED_MAJOR)'
+    LIBHOGWEED_FILE='$(LIBHOGWEED_SONAME).$(LIBHOGWEED_MINOR)'
+    LIBHOGWEED_LINK='$(CC) $(LDFLAGS) -L. -G -h $(LIBHOGWEED_SONAME)'
+    LIBHOGWEED_LIBS='-lnettle -lgmp'
+    ;;
   *)
     LIBNETTLE_FORLINK=libnettle.so
     LIBNETTLE_SONAME='$(LIBNETTLE_FORLINK).$(LIBNETTLE_MAJOR)'
@@ -204,9 +318,13 @@ case "$host_os" in
     LIBHOGWEED_FORLINK=libhogweed.so
     LIBHOGWEED_SONAME='$(LIBHOGWEED_FORLINK).$(LIBHOGWEED_MAJOR)'
     LIBHOGWEED_FILE='$(LIBHOGWEED_SONAME).$(LIBHOGWEED_MINOR)'
-    LIBHOGWEED_LINK='$(CC) $(LDFLAGS) -shared -Wl,-soname=$(LIBHOGWEED_SONAME)'
-    # FIXME: It might make some sense to link with -lnettle -lgmp
-    LIBHOGWEED_LIBS=''
+    LIBHOGWEED_LINK='$(CC) $(LDFLAGS) -L. -shared -Wl,-soname=$(LIBHOGWEED_SONAME)'
+    # Requested by debian, to make linking with only -lhogweed work
+    # (does not work in general, e.g., with static linking all of
+    # -lhogweed -lgmp -lnettle are still required). Also makes dlopen
+    # of libhogweed.so work, without having to use RTLD_GLOBAL.
+    # Depends on -L. above, to locate nettle.so.
+    LIBHOGWEED_LIBS='-lnettle -lgmp'
     ;;
 esac
 
@@ -342,13 +460,16 @@ AC_SUBST(LIBHOGWEED_LIBS)
 
 AC_PATH_PROG(M4, m4, m4)
 
+if test "x$enable_gcov" = "xyes"; then
+  CFLAGS="$CFLAGS -ftest-coverage -fprofile-arcs"
+fi
+
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_C_INLINE
 AC_TYPE_UID_T
 AC_TYPE_SIZE_T
 AC_HEADER_TIME
-# Used by eratosthenes.c
 AC_CHECK_SIZEOF(long)
 
 AC_CHECK_HEADERS([openssl/blowfish.h openssl/des.h openssl/cast.h openssl/aes.h],,
@@ -356,6 +477,7 @@ AC_CHECK_HEADERS([openssl/blowfish.h openssl/des.h openssl/cast.h openssl/aes.h]
  break])
 
 LSH_FUNC_ALLOCA
+LSH_FUNC_STRERROR
 
 # Needed by the supplied memcmp.c
 AC_C_BIGENDIAN
@@ -394,9 +516,15 @@ fi
 # Checks for libraries
 AC_CHECK_LIB(gmp, __gmpz_getlimbn,,
     [AC_MSG_WARN(
-[GNU MP not found, or not 3.1 or up, see http://www.swox.com/gmp.
+[GNU MP not found, or not 3.1 or up, see http://gmplib.org/.
 Support for public key algorithms will be unavailable.])]
     enable_public_key=no)
+
+# Add -R flags needed to run programs linked with gmp
+LSH_RPATH_FIX
+
+AH_TEMPLATE([HAVE_MPZ_POWM_SEC], [Define if mpz_powm_sec is available (appeared in GMP-5)])
+AC_CHECK_FUNC(__gmpz_powm_sec, [AC_DEFINE(HAVE_MPZ_POWM_SEC)])
 
 AH_TEMPLATE([WITH_HOGWEED], [Defined if public key features are enabled])
 
@@ -416,9 +544,6 @@ fi
 AC_SUBST(IF_HOGWEED)
 AC_SUBST(IF_SHARED)
 
-# Add -R flags needed to run programs linked with gmp
-LSH_RPATH_FIX
-
 OPENSSL_LIBFLAGS=''
 
 # Check for openssl's libcrypto (used only for benchmarking)
@@ -437,17 +562,36 @@ fi
 
 AC_SUBST(OPENSSL_LIBFLAGS)
 
+# Choose strategy for Camellia round
+AH_BOTTOM(
+[/* Needs include of <limits.h> before use. */
+#define HAVE_NATIVE_64_BIT (SIZEOF_LONG * CHAR_BIT >= 64)
+])
+
+# clock_gettime is in librt on *-*-osf5.1 and on glibc, so add -lrt to
+# BENCH_LIBS if needed. On linux (tested on x86_32, 2.6.26),
+# clock_getres reports ns accuracy, while in a quick test on osf
+# clock_getres said only 1 millisecond.
+
+old_LIBS="$LIBS"
+AC_SEARCH_LIBS(clock_gettime, rt, [
+  AC_DEFINE([HAVE_CLOCK_GETTIME],1,[Define to 1 if you have the `clock_gettime' function])])
+BENCH_LIBS="$LIBS"
+LIBS="$old_LIBS"
+
+AC_SUBST(BENCH_LIBS)
+
 # Set these flags *last*, or else the test programs won't compile
 if test x$GCC = xyes ; then
   # Using -ggdb3 makes (some versions of) Redhat's gcc-2.96 dump core
-  if "$CC" --version | grep '^2\.96$' 1>/dev/null 2>&1; then
+  if $CC --version | grep '^2\.96$' 1>/dev/null 2>&1; then
     true
   else
     CFLAGS="$CFLAGS -ggdb3"
   fi
   # FIXME: It would be better to actually test if this option works and/or is needed.
   # Or perhaps use -funsigned-char.
-  if "$CC" --version | grep 'gcc.* 4\.' 1>/dev/null 2>&1; then
+  if $CC --version | grep 'gcc.* 4\.' 1>/dev/null 2>&1; then
     CFLAGS="$CFLAGS -Wno-pointer-sign"
   fi
   CFLAGS="$CFLAGS -Wall -W \
@@ -462,6 +606,19 @@ fi
 
 AC_CONFIG_FILES([config.make config.m4 Makefile])
 AC_CONFIG_FILES([tools/Makefile testsuite/Makefile examples/Makefile])
+AC_CONFIG_FILES([nettle.pc hogweed.pc])
 
 AC_OUTPUT
 
+AC_MSG_NOTICE([summary of build options:
+
+  Version:           ${PACKAGE_STRING}
+  Host type:         ${host}
+  ABI:               ${ABI}
+  Assembly files:    ${asm_path:-none}
+  Install prefix:    ${prefix}
+  Library directory: ${libdir}
+  Compiler:          ${CC}
+  Shared libraries:  ${enable_shared}
+  Public key crypto: ${enable_public_key}
+])

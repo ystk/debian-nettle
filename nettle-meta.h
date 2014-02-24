@@ -52,44 +52,63 @@ struct nettle_cipher
   nettle_crypt_func *decrypt;
 };
 
-#define _NETTLE_CIPHER(name, NAME, keysize) {	\
-  #name #keysize,				\
+#define _NETTLE_CIPHER(name, NAME, key_size) {	\
+  #name #key_size,				\
   sizeof(struct name##_ctx),			\
   NAME##_BLOCK_SIZE,				\
-  keysize / 8,					\
+  key_size / 8,					\
   (nettle_set_key_func *) name##_set_key,	\
   (nettle_set_key_func *) name##_set_key,	\
   (nettle_crypt_func *) name##_encrypt,		\
   (nettle_crypt_func *) name##_decrypt,		\
 }
 
-#define _NETTLE_CIPHER_SEP(name, NAME, keysize) {	\
-  #name #keysize,					\
+#define _NETTLE_CIPHER_SEP(name, NAME, key_size) {	\
+  #name #key_size,					\
   sizeof(struct name##_ctx),				\
   NAME##_BLOCK_SIZE,					\
-  keysize / 8,						\
+  key_size / 8,						\
   (nettle_set_key_func *) name##_set_encrypt_key,	\
   (nettle_set_key_func *) name##_set_decrypt_key,	\
   (nettle_crypt_func *) name##_encrypt,			\
   (nettle_crypt_func *) name##_decrypt,			\
 }
 
-#define _NETTLE_CIPHER_FIX(name, NAME, keysize) {	\
+#define _NETTLE_CIPHER_SEP_SET_KEY(name, NAME, key_size) {\
+  #name #key_size,					\
+  sizeof(struct name##_ctx),				\
+  NAME##_BLOCK_SIZE,					\
+  key_size / 8,						\
+  (nettle_set_key_func *) name##_set_encrypt_key,	\
+  (nettle_set_key_func *) name##_set_decrypt_key,	\
+  (nettle_crypt_func *) name##_crypt,			\
+  (nettle_crypt_func *) name##_crypt,			\
+}
+
+#define _NETTLE_CIPHER_FIX(name, NAME) {	\
   #name,						\
   sizeof(struct name##_ctx),				\
   NAME##_BLOCK_SIZE,					\
-  keysize / 8,						\
+  NAME##_KEY_SIZE,					\
   (nettle_set_key_func *) name##_set_key,		\
   (nettle_set_key_func *) name##_set_key,		\
   (nettle_crypt_func *) name##_encrypt,			\
   (nettle_crypt_func *) name##_decrypt,			\
 }
 
+/* null-terminated list of ciphers implemented by this version of nettle */
+extern const struct nettle_cipher * const nettle_ciphers[];
+
 extern const struct nettle_cipher nettle_aes128;
 extern const struct nettle_cipher nettle_aes192;
 extern const struct nettle_cipher nettle_aes256;
 
 extern const struct nettle_cipher nettle_arcfour128;
+
+extern const struct nettle_cipher nettle_camellia128;
+extern const struct nettle_cipher nettle_camellia192;
+extern const struct nettle_cipher nettle_camellia256;
+
 extern const struct nettle_cipher nettle_cast128;
 
 extern const struct nettle_cipher nettle_serpent128;
@@ -133,11 +152,18 @@ struct nettle_hash
  (nettle_hash_digest_func *) name##_digest	\
 } 
 
+/* null-terminated list of digests implemented by this version of nettle */
+extern const struct nettle_hash * const nettle_hashes[];
+
 extern const struct nettle_hash nettle_md2;
 extern const struct nettle_hash nettle_md4;
 extern const struct nettle_hash nettle_md5;
+extern const struct nettle_hash nettle_ripemd160;
 extern const struct nettle_hash nettle_sha1;
+extern const struct nettle_hash nettle_sha224;
 extern const struct nettle_hash nettle_sha256;
+extern const struct nettle_hash nettle_sha384;
+extern const struct nettle_hash nettle_sha512;
 
 struct nettle_armor
 {
@@ -187,6 +213,9 @@ struct nettle_armor
   (nettle_armor_decode_update_func *) name##_decode_update,	\
   (nettle_armor_decode_final_func *) name##_decode_final,	\
 }
+
+/* null-terminated list of armor schemes implemented by this version of nettle */
+extern const struct nettle_armor * const nettle_armors[];
 
 extern const struct nettle_armor nettle_base64;
 extern const struct nettle_armor nettle_base16;
