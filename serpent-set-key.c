@@ -24,8 +24,8 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 /* This file is derived from cipher/serpent.c in Libgcrypt v1.4.6.
@@ -270,7 +270,7 @@
   do {									\
     uint32_t _wn = (w)[(i)] ^ (w)[((i)+3)&7] ^ w[((i)+5)&7]		\
       ^ w[((i)+7)&7] ^ PHI ^ (k)++;					\
-    ((w)[(i)] = ROL32(_wn, 11));					\
+    ((w)[(i)] = ROTL32(11, _wn));					\
   } while (0)
 
 /* Note: Increments k four times and keys once */

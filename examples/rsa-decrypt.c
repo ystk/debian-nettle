@@ -4,7 +4,7 @@
 
 /* nettle, low-level cryptographics library
  *
- * Copyright (C) 2002 Niels Möller
+ * Copyright (C) 2002 Niels MÃ¶ller
  *  
  * The nettle library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -18,8 +18,8 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 #if HAVE_CONFIG_H
@@ -31,6 +31,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#ifdef WIN32
+#include <fcntl.h>
+#endif
 
 /* string.h must be included before gmp.h */
 #include "aes.h"
@@ -120,9 +123,12 @@ process_file(struct rsa_session *ctx,
   unsigned padding;
 
   size = fread(buffer, 1, BUF_FINAL, in);
-  if (size < BUF_FINAL || ferror(in))
+  if (size < BUF_FINAL)
     {
-      werror("Reading input failed: %s\n", strerror(errno));
+      if (ferror(in))
+	werror("Reading input failed: %s\n", strerror(errno));
+      else
+	werror("Unexpected EOF on input.\n");
       return 0;
     }
 
@@ -130,7 +136,7 @@ process_file(struct rsa_session *ctx,
     {
       size = fread(buffer + BUF_FINAL, 1, BUF_SIZE, in);
 
-      if (ferror(in))
+      if (size < BUF_SIZE && ferror(in))
 	{
 	  werror("Reading input failed: %s\n", strerror(errno));
 	  return 0;
@@ -210,6 +216,11 @@ main(int argc, char **argv)
       werror("Invalid key\n");
       return EXIT_FAILURE;
     }
+
+#ifdef WIN32
+  _setmode(0, O_BINARY);
+  _setmode(1, O_BINARY);
+#endif
 
   if (!read_version(stdin))
     {

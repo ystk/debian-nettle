@@ -5,7 +5,7 @@
 
 /* nettle, low-level cryptographics library
  *
- * Copyright (C) 2001, 2002 Niels Möller
+ * Copyright (C) 2001, 2002 Niels MÃ¶ller
  *  
  * The nettle library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,8 +19,8 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 #if HAVE_CONFIG_H
@@ -246,7 +246,6 @@ pgp_put_rsa_sha1_signature(struct nettle_buffer *buffer,
   unsigned hash_end;
   unsigned sub_packet_start;
   uint8_t trailer[6];
-  uint8_t digest16[2];
   mpz_t s;
   
   /* Signature packet. The packet could reasonably be both smaller and

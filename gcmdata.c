@@ -23,12 +23,9 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
-#if HAVE_CONFIG_H
-# include "config.h"
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,7 +47,7 @@ reduce(unsigned x)
 }
 
 int
-main(int argc UNUSED, char **argv UNUSED)
+main(int argc, char **argv)
 {
   unsigned i;
   printf("4-bit table:\n");

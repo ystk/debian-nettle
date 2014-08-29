@@ -5,7 +5,7 @@
 
 /* nettle, low-level cryptographics library
  *
- * Copyright (C) 2001 Niels Möller
+ * Copyright (C) 2001 Niels MÃ¶ller
  *  
  * The nettle library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,8 +19,8 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 #ifndef NETTLE_AES_INTERNAL_H_INCLUDED
@@ -63,18 +63,16 @@ _aes_decrypt(const struct aes_ctx *ctx,
 	     const uint8_t *src);
 
 /* Macros */
-#define ROTBYTE(x) (((x) >> 8) | (((x) & 0xff) << 24))
-#define ROTRBYTE(x) (((x) << 8) | (((x) >> 24) & 0xff))
-#define SUBBYTE(x, box) (((box)[((x) & 0xff)]) | \
-                        ((box)[(((x) >> 8) & 0xff)] << 8) | \
-                        ((box)[(((x) >> 16) & 0xff)] << 16) | \
-                        ((box)[(((x) >> 24) & 0xff)] << 24))
-
 /* Get the byte with index 0, 1, 2 and 3 */
 #define B0(x) ((x) & 0xff)
 #define B1(x) (((x) >> 8) & 0xff)
 #define B2(x) (((x) >> 16) & 0xff)
 #define B3(x) (((x) >> 24) & 0xff)
+
+#define SUBBYTE(x, box) ((uint32_t)(box)[B0(x)]		\
+		      | ((uint32_t)(box)[B1(x)] << 8)	\
+		      | ((uint32_t)(box)[B2(x)] << 16)	\
+		      | ((uint32_t)(box)[B3(x)] << 24))
 
 #define AES_ROUND(T, w0, w1, w2, w3, k)		\
 ((  T->table[0][ B0(w0) ]			\

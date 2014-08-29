@@ -5,7 +5,7 @@
 
 /* nettle, low-level cryptographics library
  *
- * Copyright (C) 2002 Niels Möller
+ * Copyright (C) 2002 Niels MÃ¶ller
  *  
  * The nettle library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,8 +19,8 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 #if HAVE_CONFIG_H
@@ -45,8 +45,8 @@
 int
 rsa_generate_keypair(struct rsa_public_key *pub,
 		     struct rsa_private_key *key,
-		     void *random_ctx, nettle_random_func random,
-		     void *progress_ctx, nettle_progress_func progress,
+		     void *random_ctx, nettle_random_func *random,
+		     void *progress_ctx, nettle_progress_func *progress,
 		     unsigned n_size,
 		     unsigned e_size)
 {

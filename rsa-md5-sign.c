@@ -5,7 +5,7 @@
 
 /* nettle, low-level cryptographics library
  *
- * Copyright (C) 2001, 2003 Niels Möller
+ * Copyright (C) 2001, 2003 Niels MÃ¶ller
  *  
  * The nettle library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,8 +19,8 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 #if HAVE_CONFIG_H
@@ -39,9 +39,7 @@ rsa_md5_sign(const struct rsa_private_key *key,
              struct md5_ctx *hash,
              mpz_t s)
 {
-  assert(key->size > 0);
-
-  if (pkcs1_rsa_md5_encode(s, key->size - 1, hash))
+  if (pkcs1_rsa_md5_encode(s, key->size, hash))
     {
       rsa_compute_root(key, s, s);
       return 1;
@@ -58,9 +56,7 @@ rsa_md5_sign_digest(const struct rsa_private_key *key,
 		    const uint8_t *digest,
 		    mpz_t s)
 {
-  assert(key->size > 0);
-
-  if (pkcs1_rsa_md5_encode_digest(s, key->size - 1, digest))
+  if (pkcs1_rsa_md5_encode_digest(s, key->size, digest))
     {
       rsa_compute_root(key, s, s);
       return 1;

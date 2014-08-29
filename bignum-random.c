@@ -5,7 +5,7 @@
 
 /* nettle, low-level cryptographics library
  *
- * Copyright (C) 2002 Niels Möller
+ * Copyright (C) 2002 Niels MÃ¶ller
  *  
  * The nettle library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,8 +19,8 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 #if HAVE_CONFIG_H
@@ -34,11 +34,11 @@
 
 void
 nettle_mpz_random_size(mpz_t x,
-		       void *ctx, nettle_random_func random,
+		       void *ctx, nettle_random_func *random,
 		       unsigned bits)
 {
   unsigned length = (bits + 7) / 8;
-  TMP_DECL(data, uint8_t, NETTLE_MAX_BIGNUM_BITS / 8);
+  TMP_DECL(data, uint8_t, NETTLE_MAX_BIGNUM_SIZE);
   TMP_ALLOC(data, length);
 
   random(ctx, length, data);
@@ -52,7 +52,7 @@ nettle_mpz_random_size(mpz_t x,
 /* Returns a random number x, 0 <= x < n */
 void
 nettle_mpz_random(mpz_t x,
-		  void *ctx, nettle_random_func random,
+		  void *ctx, nettle_random_func *random,
 		  const mpz_t n)
 {
   /* NOTE: This leaves some bias, which may be bad for DSA. A better
@@ -75,11 +75,12 @@ nettle_mpz_random(mpz_t x,
    */
 
   /* Add a few bits extra, to decrease the bias from the final modulo
-   * operation. */
+   * operation. NIST FIPS 186-3 specifies 64 extra bits, for use with
+   * DSA. */
 
   nettle_mpz_random_size(x, 
 			 ctx, random,
-			 mpz_sizeinbase(n, 2) + 16);
+			 mpz_sizeinbase(n, 2) + 64);
   
   mpz_fdiv_r(x, x, n);
 }

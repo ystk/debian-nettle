@@ -1,13 +1,13 @@
 /* sha512.c
  *
- * The sha512 hash function FIXME: Add the SHA384 variant.
+ * The sha512 hash function.
  *
- * See http://csrc.nist.gov/publications/fips/fips180-2/fips180-2.pdf
+ * See http://csrc.nist.gov/publications/fips/fips180-4/fips-180-4.pdf
  */
 
 /* nettle, low-level cryptographics library
  *
- * Copyright (C) 2001, 2010 Niels Möller
+ * Copyright (C) 2001, 2010 Niels MÃ¶ller
  *  
  * The nettle library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -21,8 +21,8 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 /* Modelled after the sha1.c code by Peter Gutmann. */
@@ -35,7 +35,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "sha.h"
+#include "sha2.h"
 
 #include "macros.h"
 

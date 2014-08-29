@@ -5,7 +5,7 @@
 
 /* nettle, low-level cryptographics library
  *
- * Copyright (C) 2002 Niels Möller
+ * Copyright (C) 2002 Niels MÃ¶ller
  *  
  * The nettle library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,8 +19,8 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 #ifndef NETTLE_EXAMPLES_IO_H_INCLUDED
@@ -37,14 +37,13 @@ void *
 xalloc(size_t size);
 
 void
-werror(const char *format, ...)
-#if __GNUC___
-     __attribute__((__format__ (__printf__,1, 2)))
-#endif
-     ;
+werror(const char *format, ...) PRINTF_STYLE(1, 2);
 
-/* If size is > 0, read at most that many bytes. If size == 0,
- * read until EOF. Allocates the buffer dynamically. */
+/* If size is > 0, read at most that many bytes. If size == 0, read
+ * until EOF. Allocates the buffer dynamically. An empty file is
+ * treated as an error; return value is zero, and no space is
+ * allocated. The returned data is NUL-terminated, for convenience. */
+
 unsigned
 read_file(const char *name, unsigned size, char **buffer);
 

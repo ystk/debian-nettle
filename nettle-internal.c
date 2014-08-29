@@ -6,7 +6,7 @@
 
 /* nettle, low-level cryptographics library
  *
- * Copyright (C) 2002 Niels Möller
+ * Copyright (C) 2002 Niels MÃ¶ller
  *  
  * The nettle library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -20,8 +20,8 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 #if HAVE_CONFIG_H
@@ -35,9 +35,10 @@
 #include "blowfish.h"
 #include "des.h"
 #include "gcm.h"
+#include "salsa20.h"
 
 /* DES uses a different signature for the key set function. We ignore
-   the return value incicating weak keys. */
+   the return value indicating weak keys. */
 static void
 des_set_key_hack(void *ctx, unsigned length, const uint8_t *key)
 {
@@ -76,6 +77,34 @@ nettle_des3 = {
    blowfish_set_key has no return value. */
 const struct nettle_cipher
 nettle_blowfish128 = _NETTLE_CIPHER(blowfish, BLOWFISH, 128);
+
+/* Sets a fix zero iv. For benchmarking only. */
+static void
+salsa20_set_key_hack(void *ctx, unsigned length, const uint8_t *key)
+{
+  static const uint8_t iv[SALSA20_IV_SIZE];
+  salsa20_set_key (ctx, length, key);
+  salsa20_set_iv (ctx, iv);
+}
+
+/* Claim zero block size, to classify as a stream cipher. */
+const struct nettle_cipher
+nettle_salsa20 = {
+  "salsa20", sizeof(struct salsa20_ctx),
+  0, SALSA20_KEY_SIZE,
+  salsa20_set_key_hack, salsa20_set_key_hack,
+  (nettle_crypt_func *) salsa20_crypt,
+  (nettle_crypt_func *) salsa20_crypt
+};
+
+const struct nettle_cipher
+nettle_salsa20r12 = {
+  "salsa20r12", sizeof(struct salsa20_ctx),
+  0, SALSA20_KEY_SIZE,
+  salsa20_set_key_hack, salsa20_set_key_hack,
+  (nettle_crypt_func *) salsa20r12_crypt,
+  (nettle_crypt_func *) salsa20r12_crypt
+};
 
 const struct nettle_aead
 nettle_gcm_aes128 = _NETTLE_AEAD(gcm, GCM, aes, 128);

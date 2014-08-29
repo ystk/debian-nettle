@@ -5,7 +5,7 @@
 
 /* nettle, low-level cryptographics library
  *
- * Copyright (C) 2001, 2003, 2006 Niels Möller
+ * Copyright (C) 2001, 2003, 2006 Niels MÃ¶ller
  *  
  * The nettle library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,8 +19,8 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 #if HAVE_CONFIG_H
@@ -60,18 +60,20 @@ sha256_prefix[] =
 };
 
 int
-pkcs1_rsa_sha256_encode(mpz_t m, unsigned size, struct sha256_ctx *hash)
+pkcs1_rsa_sha256_encode(mpz_t m, unsigned key_size, struct sha256_ctx *hash)
 {
-  TMP_DECL(em, uint8_t, NETTLE_MAX_BIGNUM_BITS / 8);
-  TMP_ALLOC(em, size);
+  uint8_t *p;
+  TMP_DECL(em, uint8_t, NETTLE_MAX_BIGNUM_SIZE);
+  TMP_ALLOC(em, key_size);
 
-  if (pkcs1_signature_prefix(size, em,
-			     sizeof(sha256_prefix),
-			     sha256_prefix,
-			     SHA256_DIGEST_SIZE))
+  p = _pkcs1_signature_prefix(key_size, em,
+			      sizeof(sha256_prefix),
+			      sha256_prefix,
+			      SHA256_DIGEST_SIZE);
+  if (p)
     {
-      sha256_digest(hash, SHA256_DIGEST_SIZE, em + size - SHA256_DIGEST_SIZE);
-      nettle_mpz_set_str_256_u(m, size, em);
+      sha256_digest(hash, SHA256_DIGEST_SIZE, p);
+      nettle_mpz_set_str_256_u(m, key_size, em);
       return 1;
     }
   else
@@ -79,18 +81,20 @@ pkcs1_rsa_sha256_encode(mpz_t m, unsigned size, struct sha256_ctx *hash)
 }
 
 int
-pkcs1_rsa_sha256_encode_digest(mpz_t m, unsigned size, const uint8_t *digest)
+pkcs1_rsa_sha256_encode_digest(mpz_t m, unsigned key_size, const uint8_t *digest)
 {
-  TMP_DECL(em, uint8_t, NETTLE_MAX_BIGNUM_BITS / 8);
-  TMP_ALLOC(em, size);
+  uint8_t *p;
+  TMP_DECL(em, uint8_t, NETTLE_MAX_BIGNUM_SIZE);
+  TMP_ALLOC(em, key_size);
 
-  if (pkcs1_signature_prefix(size, em,
-			     sizeof(sha256_prefix),
-			     sha256_prefix,
-			     SHA256_DIGEST_SIZE))
+  p = _pkcs1_signature_prefix(key_size, em,
+			      sizeof(sha256_prefix),
+			      sha256_prefix,
+			      SHA256_DIGEST_SIZE);
+  if (p)
     {
-      memcpy(em + size - SHA256_DIGEST_SIZE, digest, SHA256_DIGEST_SIZE);
-      nettle_mpz_set_str_256_u(m, size, em);
+      memcpy(p, digest, SHA256_DIGEST_SIZE);
+      nettle_mpz_set_str_256_u(m, key_size, em);
       return 1;
     }
   else

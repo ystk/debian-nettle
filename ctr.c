@@ -5,7 +5,7 @@
 
 /* nettle, low-level cryptographics library
  *
- * Copyright (C) 2005 Niels Möller
+ * Copyright (C) 2005 Niels MÃ¶ller
  *  
  * The nettle library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,8 +19,8 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 #if HAVE_CONFIG_H
@@ -40,7 +40,7 @@
 #define NBLOCKS 4
 
 void
-ctr_crypt(void *ctx, nettle_crypt_func f,
+ctr_crypt(void *ctx, nettle_crypt_func *f,
 	  unsigned block_size, uint8_t *ctr,
 	  unsigned length, uint8_t *dst,
 	  const uint8_t *src)
@@ -82,16 +82,7 @@ ctr_crypt(void *ctx, nettle_crypt_func f,
     }
   else
     {
-      if (length <= block_size)
-	{
-	  TMP_DECL(buffer, uint8_t, NETTLE_MAX_CIPHER_BLOCK_SIZE);
-	  TMP_ALLOC(buffer, block_size);
-
-	  f(ctx, block_size, buffer, ctr);
-	  INCREMENT(block_size, ctr);
-	  memxor3(dst, src, buffer, length);
-	}
-      else
+      if (length > block_size)
 	{
 	  TMP_DECL(buffer, uint8_t, NBLOCKS * NETTLE_MAX_CIPHER_BLOCK_SIZE);
 	  unsigned chunk = NBLOCKS * block_size;
@@ -123,6 +114,15 @@ ctr_crypt(void *ctx, nettle_crypt_func f,
 	      f(ctx, chunk, buffer, buffer);
 	      memxor3(dst, src, buffer, length);
 	    }
+	}
+      else if (length > 0)
+      	{
+	  TMP_DECL(buffer, uint8_t, NETTLE_MAX_CIPHER_BLOCK_SIZE);
+	  TMP_ALLOC(buffer, block_size);
+
+	  f(ctx, block_size, buffer, ctr);
+	  INCREMENT(block_size, ctr);
+	  memxor3(dst, src, buffer, length);
 	}
     }
 }

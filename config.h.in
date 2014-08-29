@@ -3,6 +3,9 @@
 /* Define if building universal (internal helper macro) */
 #undef AC_APPLE_UNIVERSAL_BUILD
 
+/* The normal alignment of `uint64_t', in bytes. */
+#undef ALIGNOF_UINT64_T
+
 /* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
    systems. This function is required for `alloca.c' support on those systems.
    */
@@ -18,7 +21,7 @@
    */
 #undef HAVE_ALLOCA_H
 
-/* Define to 1 if you have the `clock_gettime' function */
+/* Define if clock_gettime is available */
 #undef HAVE_CLOCK_GETTIME
 
 /* Define if fcntl file locking is available */
@@ -44,6 +47,19 @@
 
 /* Define if mpz_powm_sec is available (appeared in GMP-5) */
 #undef HAVE_MPZ_POWM_SEC
+
+/* Define to 1 each of the following for which a native (ie. CPU specific)
+    implementation of the corresponding routine exists.  */
+#undef HAVE_NATIVE_ecc_192_modp
+#undef HAVE_NATIVE_ecc_192_redc
+#undef HAVE_NATIVE_ecc_224_modp
+#undef HAVE_NATIVE_ecc_224_redc
+#undef HAVE_NATIVE_ecc_256_modp
+#undef HAVE_NATIVE_ecc_256_redc
+#undef HAVE_NATIVE_ecc_384_modp
+#undef HAVE_NATIVE_ecc_384_redc
+#undef HAVE_NATIVE_ecc_521_modp
+#undef HAVE_NATIVE_ecc_521_redc
 
 /* Define to 1 if you have the <openssl/aes.h> header file. */
 #undef HAVE_OPENSSL_AES_H
@@ -184,6 +200,11 @@ char *alloca ();
 #else /* defined __GNUC__ */
 # if HAVE_ALLOCA_H
 #  include <alloca.h>
+# else
+/* Needed for alloca on windows, also with gcc */
+#  if HAVE_MALLOC_H
+#   include <malloc.h>
+#  endif
 # endif
 #endif
 
@@ -206,6 +227,10 @@ char *alloca ();
 #endif
 
 
+#if defined(__x86_64__) || defined(__arch64__)
+# define HAVE_NATIVE_64_BIT 1
+#else
 /* Needs include of <limits.h> before use. */
-#define HAVE_NATIVE_64_BIT (SIZEOF_LONG * CHAR_BIT >= 64)
+# define HAVE_NATIVE_64_BIT (SIZEOF_LONG * CHAR_BIT >= 64)
+#endif
 

@@ -1,4 +1,3 @@
-C -*- mode: asm; asm-comment-char: ?C; -*-  
 C nettle, low-level cryptographics library
 C 
 C Copyright (C) 2010, Niels Möller
@@ -15,8 +14,8 @@ C License for more details.
 C 
 C You should have received a copy of the GNU Lesser General Public License
 C along with the nettle library; see the file COPYING.LIB.  If not, write to
-C the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
-C MA 02111-1307, USA.
+C the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+C MA 02111-1301, USA.
 
 C Performance, cycles per block
 C
@@ -122,9 +121,10 @@ C	xorl	XREG(TMP), XREG($1)
 	C	          unsigned length, uint8_t *dst,
 	C	          uint8_t *src)
 	.text
-	ALIGN(4)
+	ALIGN(16)
 PROLOGUE(_nettle_camellia_crypt)
 
+	W64_ENTRY(5, 0)
 	test	LENGTH, LENGTH
 	jz	.Lend
 
@@ -182,5 +182,6 @@ PROLOGUE(_nettle_camellia_crypt)
 	pop	%rbp
 	pop	%rbx
 .Lend:
+	W64_EXIT(5, 0)
 	ret
 EPILOGUE(_nettle_camellia_crypt)

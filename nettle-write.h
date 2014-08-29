@@ -5,7 +5,7 @@
 
 /* nettle, low-level cryptographics library
  *
- * Copyright (C) 2010 Niels Möller
+ * Copyright (C) 2010 Niels MÃ¶ller
  *  
  * The nettle library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,8 +19,8 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 #ifndef NETTLE_WRITE_H_INCLUDED
@@ -31,14 +31,17 @@
 /* Write the word array at SRC to the byte array at DST, using little
    endian (le) or big endian (be) byte order, and truncating the
    result to LENGTH bytes. */
+
+/* FIXME: Use a macro shortcut to memcpy for native endianness. */
 void
 _nettle_write_be32(unsigned length, uint8_t *dst,
 		   uint32_t *src);
 void
 _nettle_write_le32(unsigned length, uint8_t *dst,
 		   uint32_t *src);
+
 void
-_nettle_write_be64(unsigned length, uint8_t *dst,
+_nettle_write_le64(unsigned length, uint8_t *dst,
 		   uint64_t *src);
 
 #endif /* NETTLE_WRITE_H_INCLUDED */

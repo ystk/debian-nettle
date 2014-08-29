@@ -6,7 +6,7 @@
 
 /* nettle, low-level cryptographics library
  *
- * Copyright (C) 2001 Peter Gutmann, Andrew Kuchling, Niels Möller
+ * Copyright (C) 2001 Peter Gutmann, Andrew Kuchling, Niels MÃ¶ller
  *  
  * The nettle library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -20,8 +20,8 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 /* Here's the first paragraph of Peter Gutmann's posting,
@@ -44,7 +44,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "sha.h"
+#include "sha1.h"
 
 #include "macros.h"
 #include "nettle-write.h"

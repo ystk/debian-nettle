@@ -6,7 +6,7 @@
  
 /* nettle, low-level cryptographics library
  *
- * Copyright (C) 2001, 2010 Niels Möller
+ * Copyright (C) 2001, 2010 Niels MÃ¶ller
  *  
  * The nettle library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -20,8 +20,8 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 #if HAVE_CONFIG_H
@@ -38,6 +38,8 @@
 
 #include <time.h>
 
+#include "timing.h"
+
 #include "aes.h"
 #include "arcfour.h"
 #include "blowfish.h"
@@ -47,9 +49,13 @@
 #include "des.h"
 #include "gcm.h"
 #include "memxor.h"
+#include "salsa20.h"
 #include "serpent.h"
-#include "sha.h"
+#include "sha1.h"
+#include "sha2.h"
+#include "sha3.h"
 #include "twofish.h"
+#include "umac.h"
 
 #include "nettle-meta.h"
 #include "nettle-internal.h"
@@ -96,7 +102,7 @@ static double frequency = 0.0;
 #define BENCH_ITERATIONS 10
 #endif
 
-static void
+static void NORETURN PRINTF_STYLE(1,2)
 die(const char *format, ...)
 {
   va_list args;
@@ -108,58 +114,6 @@ die(const char *format, ...)
 }
 
 static double overhead = 0.0; 
-
-#if HAVE_CLOCK_GETTIME && defined CLOCK_PROCESS_CPUTIME_ID
-#define TRY_CLOCK_GETTIME 1
-struct timespec cgt_start;
-
-static int
-cgt_works_p(void)
-{
-  struct timespec now;
-  return clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &now) == 0;
-}
-
-static void
-cgt_time_start(void)
-{
-  if (clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &cgt_start) < 0)
-    die("clock_gettime failed: %s\n", strerror(errno));
-}
-
-static double
-cgt_time_end(void)
-{
-    struct timespec end;
-    if (clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end) < 0)
-      die("clock_gettime failed: %s\n", strerror(errno));
-
-    return end.tv_sec - cgt_start.tv_sec
-      + 1e-9 * (end.tv_nsec - cgt_start.tv_nsec);
-}
-
-static void (*time_start)(void);
-static double (*time_end)(void);
-
-#else /* !HAVE_CLOCK_GETTIME */
-#define TRY_CLOCK_GETTIME 0
-#define time_start clock_time_start
-#define time_end clock_time_end
-#endif /* !HAVE_CLOCK_GETTIME */
-
-static clock_t clock_start;
-
-static void
-clock_time_start(void)
-{
-  clock_start = clock();
-}
-
-static double
-clock_time_end(void)
-{
-  return (double) (clock() - (clock_start)) / CLOCKS_PER_SEC;
-}
 
 /* Returns second per function call */
 static double
@@ -400,6 +354,51 @@ time_hash(const struct nettle_hash *hash)
 }
 
 static void
+time_umac(void)
+{
+  static uint8_t data[BENCH_BLOCK];
+  struct bench_hash_info info;
+  struct umac32_ctx ctx32;
+  struct umac64_ctx ctx64;
+  struct umac96_ctx ctx96;
+  struct umac128_ctx ctx128;
+  
+  uint8_t key[16];
+
+  umac32_set_key (&ctx32, key);
+  info.ctx = &ctx32;
+  info.update = (nettle_hash_update_func *) umac32_update;
+  info.data = data;
+
+  display("umac32", "update", UMAC_DATA_SIZE,
+	  time_function(bench_hash, &info));
+
+  umac64_set_key (&ctx64, key);
+  info.ctx = &ctx64;
+  info.update = (nettle_hash_update_func *) umac64_update;
+  info.data = data;
+
+  display("umac64", "update", UMAC_DATA_SIZE,
+	  time_function(bench_hash, &info));
+
+  umac96_set_key (&ctx96, key);
+  info.ctx = &ctx96;
+  info.update = (nettle_hash_update_func *) umac96_update;
+  info.data = data;
+
+  display("umac96", "update", UMAC_DATA_SIZE,
+	  time_function(bench_hash, &info));
+
+  umac128_set_key (&ctx128, key);
+  info.ctx = &ctx128;
+  info.update = (nettle_hash_update_func *) umac128_update;
+  info.data = data;
+
+  display("umac128", "update", UMAC_DATA_SIZE,
+	  time_function(bench_hash, &info));
+}
+
+static void
 time_gcm(void)
 {
   static uint8_t data[BENCH_BLOCK];
@@ -431,6 +430,23 @@ time_gcm(void)
 
   display("gcm-aes", "decrypt", GCM_BLOCK_SIZE,
 	  time_function(bench_cipher, &cinfo));
+}
+
+static int
+prefix_p(const char *prefix, const char *s)
+{
+  size_t i;
+  for (i = 0; prefix[i]; i++)
+    if (prefix[i] != s[i])
+      return 0;
+  return 1;
+}
+
+static int
+block_cipher_p(const struct nettle_cipher *cipher)
+{
+  /* Don't use nettle cbc and ctr for openssl ciphers. */
+  return cipher->block_size > 0 && !prefix_p("openssl", cipher->name);
 }
 
 static void
@@ -472,8 +488,7 @@ time_cipher(const struct nettle_cipher *cipher)
 	    time_function(bench_cipher, &info));
   }
 
-  /* Don't use nettle cbc to benchmark openssl ciphers */
-  if (cipher->block_size && cipher->name[0] != 'o')
+  if (block_cipher_p(cipher))
     {
       uint8_t *iv = xalloc(cipher->block_size);
       
@@ -533,6 +548,8 @@ time_cipher(const struct nettle_cipher *cipher)
   free(key);
 }
 
+/* Try to get accurate cycle times for assembler functions. */
+#if WITH_CYCLE_COUNTER
 static int
 compare_double(const void *ap, const void *bp)
 {
@@ -546,40 +563,64 @@ compare_double(const void *ap, const void *bp)
     return 0;
 }
 
-/* Try to get accurate cycle times for assembler functions. */
+#define TIME_CYCLES(t, code) do {				\
+  double tc_count[5];						\
+  uint32_t tc_start_lo, tc_start_hi, tc_end_lo, tc_end_hi;	\
+  unsigned tc_i, tc_j;						\
+  for (tc_j = 0; tc_j < 5; tc_j++)				\
+    {								\
+      tc_i = 0;							\
+      GET_CYCLE_COUNTER(tc_start_hi, tc_start_lo);		\
+      for (; tc_i < BENCH_ITERATIONS; tc_i++)			\
+	{ code; }						\
+								\
+      GET_CYCLE_COUNTER(tc_end_hi, tc_end_lo);			\
+								\
+      tc_end_hi -= (tc_start_hi + (tc_start_lo > tc_end_lo));	\
+      tc_end_lo -= tc_start_lo;					\
+								\
+      tc_count[tc_j] = ldexp(tc_end_hi, 32) + tc_end_lo;	\
+    }								\
+  qsort(tc_count, 5, sizeof(double), compare_double);		\
+  (t) = tc_count[2] / BENCH_ITERATIONS;				\
+} while (0)
+
 static void
 bench_sha1_compress(void)
 {
-#if WITH_CYCLE_COUNTER
   uint32_t state[_SHA1_DIGEST_LENGTH];
-  uint8_t data[BENCH_ITERATIONS * SHA1_DATA_SIZE];
-  uint32_t start_lo, start_hi, end_lo, end_hi;
+  uint8_t data[SHA1_DATA_SIZE];
+  double t;
 
-  double count[5];
-  
-  uint8_t *p;
-  unsigned i, j;
+  TIME_CYCLES (t, _nettle_sha1_compress(state, data));
 
-  for (j = 0; j < 5; j++)
-    {
-      i = 0;
-      p = data;
-      GET_CYCLE_COUNTER(start_hi, start_lo);
-      for (; i < BENCH_ITERATIONS; i++, p += SHA1_DATA_SIZE)
-	_nettle_sha1_compress(state, p);
-
-      GET_CYCLE_COUNTER(end_hi, end_lo);
-
-      end_hi -= (start_hi + (start_lo > end_lo));
-      end_lo -= start_lo;
-
-      count[j] = ldexp(end_hi, 32) + end_lo;
-    }
-
-  qsort(count, 5, sizeof(double), compare_double);
-  printf("sha1_compress: %.2f cycles\n\n", count[2] / BENCH_ITERATIONS);  
-#endif
+  printf("sha1_compress: %.2f cycles\n", t);  
 }
+
+static void
+bench_salsa20_core(void)
+{
+  uint32_t state[_SALSA20_INPUT_LENGTH];
+  double t;
+
+  TIME_CYCLES (t, _nettle_salsa20_core(state, state, 20));
+  printf("salsa20_core: %.2f cycles\n", t);  
+}
+
+static void
+bench_sha3_permute(void)
+{
+  struct sha3_state state;
+  double t;
+
+  TIME_CYCLES (t, sha3_permute (&state));
+  printf("sha3_permute: %.2f cycles (%.2f / round)\n", t, t / 24.0);
+}
+#else
+#define bench_sha1_compress()
+#define bench_salsa20_core()
+#define bench_sha3_permute()
+#endif
 
 #if WITH_OPENSSL
 # define OPENSSL(x) x,
@@ -601,7 +642,9 @@ main(int argc, char **argv)
       &nettle_sha1, OPENSSL(&nettle_openssl_sha1)
       &nettle_sha224, &nettle_sha256,
       &nettle_sha384, &nettle_sha512,
-      &nettle_ripemd160,
+      &nettle_sha3_224, &nettle_sha3_256,
+      &nettle_sha3_384, &nettle_sha3_512,
+      &nettle_ripemd160, &nettle_gosthash94,
       NULL
     };
 
@@ -619,6 +662,7 @@ main(int argc, char **argv)
       &nettle_des3,
       &nettle_serpent256,
       &nettle_twofish128, &nettle_twofish192, &nettle_twofish256,
+      &nettle_salsa20, &nettle_salsa20r12,
       NULL
     };
 
@@ -652,22 +696,11 @@ main(int argc, char **argv)
 
   alg = argv[optind];
 
-  /* Choose timing function */
-#if TRY_CLOCK_GETTIME
-  if (cgt_works_p())
-    {
-      time_start = cgt_time_start;
-      time_end = cgt_time_end;
-    }
-  else
-    {
-      fprintf(stderr, "clock_gettime not working, falling back to clock\n");
-      time_start = clock_time_start;
-      time_end = clock_time_end;
-    }
-#endif
+  time_init();
   bench_sha1_compress();
-
+  bench_salsa20_core();
+  bench_sha3_permute();
+  printf("\n");
   time_overhead();
 
   header();
@@ -681,6 +714,9 @@ main(int argc, char **argv)
   for (i = 0; hashes[i]; i++)
     if (!alg || strstr(hashes[i]->name, alg))
       time_hash(hashes[i]);
+
+  if (!alg || strstr ("umac", alg))
+    time_umac();
 
   for (i = 0; ciphers[i]; i++)
     if (!alg || strstr(ciphers[i]->name, alg))

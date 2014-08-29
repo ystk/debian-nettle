@@ -4,7 +4,7 @@
 
 /* nettle, low-level cryptographics library
  *
- * Copyright (C) 2002 Niels Möller
+ * Copyright (C) 2002 Niels MÃ¶ller
  *  
  * The nettle library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -18,8 +18,8 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 #if HAVE_CONFIG_H
@@ -31,20 +31,32 @@
 
 #include "realloc.h"
 
+/* NOTE: Calling libc realloc with size == 0 is not required to
+   totally free the object, it is allowed to return a valid
+   pointer. */
 void *
 nettle_realloc(void *ctx UNUSED, void *p, unsigned length)
 {
-  return realloc(p, length);
+  if (length > 0)
+    return realloc(p, length);
+
+  free(p);
+  return NULL;
 }
 
 void *
 nettle_xrealloc(void *ctx UNUSED, void *p, unsigned length)
 {
-  void *n = realloc(p, length);
-  if (length && !n)
+  if (length > 0)
     {
-      fprintf(stderr, "Virtual memory exhausted.\n");
-      abort();
+      void *n = realloc(p, length);
+      if (!n)
+	{
+	  fprintf(stderr, "Virtual memory exhausted.\n");
+	  abort();
+	}
+      return n;
     }
-  return n;
+  free(p);
+  return NULL;
 }

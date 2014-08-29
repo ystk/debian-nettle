@@ -1,3 +1,233 @@
+NEWS for the 2.7.1 release
+
+	This is a bugfix release.
+
+	Bug fixes:
+
+	* Fixed a bug in the new ECC code. The ecc_j_to_a function
+	  called GMP:s mpn_mul_n (via ecc_modp_mul) with overlapping
+	  input and output arguments, which is not supported.
+
+	* The assembly files for SHA1, SHA256 and AES depend on ARMv6
+          instructions, breaking nettle-2.7 for pre-v6 ARM processors.
+          The configure script now enables those assembly files only
+          when building for ARMv6 or later.
+	  
+	* Use a more portable C expression for rotations. The
+	  previous version used the following "standard" expression
+	  for 32-bit rotation:
+
+	    (x << n) | (x >> (32 - n))
+
+	  But this gives undefined behavior (according to the C
+	  specification) for n = 0. The rotate expression is replaced
+	  by the more portable:
+
+	    (x << n) | (x >> ((-n)&31))
+
+	  This change affects only CAST128, which uses non-constant
+	  rotation counts. Unfortunately, the new expression is poorly
+	  optimized by released versions of gcc, making CAST128 a bit
+	  slower. This is being fixed by the gcc hackers, see
+	  http://gcc.gnu.org/bugzilla/show_bug.cgi?id=57157.
+	  
+	The following problems have been reported, but are *not* fixed
+	in this release:
+
+	* ARM assembly files use instruction syntax which is not
+          supported by all assemblers. Workaround: Use a current
+          version of GNU as, or configure with --disable-assembler.
+
+	* Configuring with --disable-static doesn't work on windows.
+	
+	The libraries are intended to be binary compatible with
+	nettle-2.2 and later. The shared library names are
+	libnettle.so.4.7 and libhogweed.so.2.5, with sonames still
+	libnettle.so.4 and libhogweed.so.2.
+
+NEWS for the 2.7 release
+
+	This release includes an implementation of elliptic curve
+	cryptography (ECC) and optimizations for the ARM architecture.
+	This work was done at the offices of South Pole AB, and
+	generously funded by the .SE Internet Fund.
+
+	Bug fixes:
+
+	* Fixed a bug in the buffer handling for incremental SHA3
+	  hashing, with a possible buffer overflow. Patch by Edgar
+	  E. Iglesias.
+
+	New features:
+
+	* Support for ECDSA signatures. Elliptic curve operations over
+	  the following curves: secp192r1, secp224r1, secp256r1,
+	  secp384r1 and secp521r1, including x86_64 and ARM assembly
+	  for the most important primitives.
+	  
+	* Support for UMAC, including x86_64 and ARM assembly.
+
+	* Support for 12-round salsa20, "salsa20r12", as specified by
+	  eSTREAM. Contributed by Nikos Mavrogiannopoulos.
+	
+	Optimizations:
+
+	* ARM assembly code for several additional algorithms,
+	  including AES, Salsa20, and the SHA family of hash
+	  functions. 
+
+	* x86_64 assembly for SHA256, SHA512, and SHA3. (SHA3 assembly
+          was included in the 2.6 release, but disabled due to poor
+          performance on some AMD processors. Hopefully, that
+          performance problem is fixed now).
+	
+	The ARM code was tested and benchmarked on Cortex-A9. Some of
+	the functions use "neon" instructions. The configure script
+	decides if neon instructions can be used, and the command line
+	options --enable-arm-neon and --disable-arm-neon can be used
+	to override its choice. Feedback appreciated.
+	  
+	The libraries are intended to be binary compatible with
+	nettle-2.2 and later. The shared library names are
+	libnettle.so.4.6 and libhogweed.so.2.4, with sonames still
+	libnettle.so.4 and libhogweed.so.2.
+
+NEWS for the 2.6 release
+
+	Bug fixes:
+
+	* Fixed a bug in ctr_crypt. For zero length (which should be a
+	  NOP), it sometimes incremented the counter. Reported by Tim
+	  Kosse.
+
+	* Fixed a small memory leak in nettle_realloc and
+          nettle_xrealloc.
+
+	New features:
+
+	* Support for PKCS #5 PBKDF2, to generate a key from a
+          password or passphrase. Contributed by Simon Josefsson.
+          Specification in RFC 2898 and test vectors in RFC 6070.
+
+	* Support for SHA3.
+	  
+	* Support for the GOST R 34.11-94 hash algorithm. Ported from
+	  librhash by Nikos Mavrogiannopoulos. Written by Aleksey
+	  Kravchenko. More information in RFC4357. Test vectors taken
+	  from the GOST hash wikipedia page.
+
+	Miscellaneous:
+
+	* The include file <nettle/sha.h> has been split into
+          <nettle/sha1.h> and <nettle/sha2.h>. For now, sha.h is kept
+          for backwards compatibility and it simply includes both
+          files, but applications are encouraged to use the new names.
+          The new SHA3 functions are declared in <nettle/sha3.h>.
+
+	* Testsuite can be run under valgrind, using
+
+	  make check EMULATOR='$(VALGRIND)'
+
+	  For this to work, test programs and other executables now
+	  deallocate storage.
+	  
+	* New configure options --disable-documentation and
+          --disable-static. Contributed by Sam Thursfield and Alon
+	  Bar-Lev, respectively.
+	  
+	* The section on hash functions in the manual is split into
+          separate nodes for recommended hash functions and legacy
+          hash functions.
+
+	* Various smaller improvements, most of them portability
+          fixes. Credits go to David Woodhouse, Tim Rühsen, Martin
+          Storsjö, Nikos Mavrogiannopoulos, Fredrik Thulin and Dennis
+          Clarke.
+
+	Finally, a note on the naming of the various "SHA" hash
+	functions. Naming is a bit inconsistent; we have, e.g.,
+
+	  SHA1: sha1_digest
+	  SHA2: sha256_digest   (not sha2_256_digest)
+	  SHA3: sha3_256_digest
+
+	Renaming the SHA2 functions to make Nettle's naming more
+	consistent has been considered, but the current naming follows
+	common usage. Most documents (including the specification for
+	SHA2) refer to 256-bit SHA2 as "SHA-256" or "SHA256" rather
+	than "SHA2-256".
+
+	The libraries are intended to be binary compatible with
+	nettle-2.2 and later. The shared library names are
+	libnettle.so.4.5 and libhogweed.so.2.3, with sonames still
+	libnettle.so.4 and libhogweed.so.2
+
+NEWS for the 2.5 release
+
+	This release includes important portability fixes for Windows
+	and MacOS. There are also a few new features.
+
+	First a *warning*: Some internal functions have been removed
+	from the library. Since the functions in question are internal
+	and not documented, this is not considered a change of ABI or
+	API. Programs explicitly using any of these functions will
+	break.
+	
+	* The function pkcs1_signature_prefix has been renamed to
+	  _pkcs1_signature_prefix, and with slightly different
+	  behavior.
+
+	* The file nettle-internal.c is no longer included in the
+          library (the features defined there are used by the
+          benchmark and test programs, and were never intended for
+          public use).
+
+	New features:
+
+	* Support for the salsa20 stream cipher, including x86_64
+          assembler. Originally contributed by Simon Josefsson, based
+          on the reference implementation, then further optimized.
+
+	* Tentative interface for timing-resistant RSA functions,
+          contributed by Nikos Mavrogiannopoulos.
+
+	* A more general interface for PKCS#1 signatures, taking the
+          input in the form of a "DigestInfo". Suggested by Nikos
+          Mavrogiannopoulos.
+
+	Configuration:
+	
+	* Building of shared libraries (./configure --enable-shared)
+          is now enabled by default.
+
+	* Various portability fixes for MacOS and M$ Windows. A lot of
+	  this work done by Martin Storsjö.
+
+	* In particular, Nettle now hopefully works on 64-bit Windows
+	  builds, "W64", including the x86_64 assembly code.
+
+	Miscellaneous:
+	
+	* Documentation and example programs for the base16 and base64
+	  functions. Was contributed by Jeronimo Pellegrini back in
+	  2006, but unfortunately forgotten until now.
+
+	* Use an additional table to avoid GF2^8 multiplications in
+	  aes_invert_key (mainly used by aes_set_decrypt_key). Also
+	  tabulate round constants in aes_set_encrypt_key.
+
+	* The nettle repository has been migrated from cvs to git,
+	  with a public repository at
+	  http://git.lysator.liu.se/nettle. To make it independent of
+	  the LSH repository, a few files have been moved around.
+	  While at it, files have also been converted from latin-1 to
+	  utf-8.
+
+	The libraries are intended to be binary compatible with
+	nettle-2.2 and later. The shared library names are
+	libnettle.so.4.4 and libhogweed.so.2.2, with sonames still
+	libnettle.so.4 and libhogweed.so.2
+
 NEWS for the 2.4 release
 
 	This is a bugfix release only. It turned out ripemd160 in the
@@ -23,7 +253,7 @@ NEWS for the 2.3 release
 	  certain platforms. Should not affect any documented features
 	  of the library.
 
-	* Reorganization of the code for the various Merkle-Damg�rd
+	* Reorganization of the code for the various Merkle-Damgård
 	  hash functions. Some fields in the context structs for md4,
 	  md5 and sha1 have been renamed, for consistency.
 	  Applications should not peek inside these structs, and the

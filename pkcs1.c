@@ -5,7 +5,7 @@
 
 /* nettle, low-level cryptographics library
  *
- * Copyright (C) 2003 Niels Möller
+ * Copyright (C) 2003 Niels MÃ¶ller
  *  
  * The nettle library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,8 +19,8 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 #if HAVE_CONFIG_H
@@ -34,31 +34,32 @@
 
 /* Formats the PKCS#1 padding, of the form
  *
- *   0x01 0xff ... 0xff 0x00 id ...digest...
+ *   0x00 0x01 0xff ... 0xff 0x00 id ...digest...
  *
  * where the 0xff ... 0xff part consists of at least 8 octets. The 
- * total size should be one less than the octet size of n.
+ * total size equals the octet size of n.
  */
-int
-pkcs1_signature_prefix(unsigned size,
-		       uint8_t *buffer,
-		       unsigned id_size,
-		       const uint8_t *id,
-		       unsigned digest_size)
+uint8_t *
+_pkcs1_signature_prefix(unsigned key_size,
+			uint8_t *buffer,
+			unsigned id_size,
+			const uint8_t *id,
+			unsigned digest_size)
 {
   unsigned j;
   
-  if (size < 10 + id_size + digest_size)
-    return 0;
+  if (key_size < 11 + id_size + digest_size)
+    return NULL;
 
-  j = size - digest_size - id_size;
+  j = key_size - digest_size - id_size;
 
   memcpy (buffer + j, id, id_size);
-  buffer[0] = 1;
-  buffer[--j] = 0;
+  buffer[0] = 0;
+  buffer[1] = 1;
+  buffer[j-1] = 0;
 
-  assert(j >= 9);
-  memset(buffer + 1, 0xff, j - 1);
+  assert(j >= 11);
+  memset(buffer + 2, 0xff, j - 3);
 
-  return 1;
+  return buffer + j + id_size;
 }

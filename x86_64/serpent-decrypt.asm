@@ -14,8 +14,8 @@ C License for more details.
 C 
 C You should have received a copy of the GNU Lesser General Public License
 C along with the nettle library; see the file COPYING.LIB.  If not, write to
-C the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
-C MA 02111-1307, USA.
+C the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+C MA 02111-1301, USA.
 
 include_src(<x86_64/serpent.m4>)
 
@@ -522,9 +522,10 @@ define(<WLTI>, <
 	C	          unsigned length, uint8_t *dst,
 	C	          const uint8_t *src)
 	.text
-	ALIGN(4)
+	ALIGN(16)
 PROLOGUE(nettle_serpent_decrypt)
         C save all registers that need to be saved
+	W64_ENTRY(4, 13)
 	push	%rbx
 	push	%rbp
 	push	%r12
@@ -556,7 +557,7 @@ PROLOGUE(nettle_serpent_decrypt)
 
 	jmp	.Lwround_start
 
-	ALIGN(4)
+	ALIGN(16)
 
 .Lwround_loop:
 	WLTI(X0,X1,X2,X3)
@@ -623,7 +624,7 @@ PROLOGUE(nettle_serpent_decrypt)
 	mov	$384, CNT
 	jmp	.Lround_start
 
-	ALIGN(4)
+	ALIGN(16)
 .Lround_loop:
 	LTI(x0,x1,x2,x3)
 .Lround_start:
@@ -697,4 +698,5 @@ PROLOGUE(nettle_serpent_decrypt)
 	pop	%r12
 	pop	%rbp
 	pop	%rbx
+	W64_EXIT(4, 13)
 	ret

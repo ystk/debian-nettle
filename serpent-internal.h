@@ -24,8 +24,8 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 /* This file is derived from cipher/serpent.c in Libgcrypt v1.4.6.
@@ -41,9 +41,6 @@
 #ifndef NETTLE_SERPENT_INTERNAL_H_INCLUDED
 #define NETTLE_SERPENT_INTERNAL_H_INCLUDED
 
-/* FIXME: Unify ROL macros used here, in camellia.c and cast128.c. */
-#define ROL32(x,n) ((((x))<<(n)) | (((x))>>(32-(n))))
-
 #define KEYXOR(x0,x1,x2,x3, subkey)		       \
   do {						       \
     (x0) ^= (subkey)[0];			       \
@@ -54,9 +51,9 @@
 
 #if HAVE_NATIVE_64_BIT
 /* Operate independently on both halves of a 64-bit word. */
-#define ROL64(x,n) \
-  (((x) << (n) & ~(((1L << (n))-1) << 32)) \
-   |(((x) >> (32-(n))) & ~(((1L << (32-(n)))-1) << (n))))
+#define DROTL32(n,x) \
+  (((x) << (n) & ~((((uint64_t) 1 << (n))-1) << 32)) \
+   |(((x) >> (32-(n))) & ~((((uint64_t) 1 << (32-(n)))-1) << (n))))
 
 #define KEYXOR64(x0,x1,x2,x3, subkey)		       \
   do {						       \
@@ -67,8 +64,8 @@
     _sk = (subkey)[3]; _sk |= _sk << 32; (x3) ^= _sk;    \
   } while (0)
 
-#define RSHIFT64(x,n) \
-  ( ((x) << (n)) & ~(((1L << n) - 1) << 32))
+#define DRSHIFT32(n,x) \
+  ( ((x) << (n)) & ~((((uint64_t) 1 << (n)) - 1) << 32))
 #endif /* HAVE_NATIVE_64_BIT */
 
 #endif /* NETTLE_SERPENT_INTERNAL_H_INCLUDED */

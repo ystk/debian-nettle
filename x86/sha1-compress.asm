@@ -1,6 +1,6 @@
 C nettle, low-level cryptographics library
 C 
-C Copyright (C) 2004, Niels Möller
+C Copyright (C) 2004, Niels MÃ¶ller
 C  
 C The nettle library is free software; you can redistribute it and/or modify
 C it under the terms of the GNU Lesser General Public License as published by
@@ -14,8 +14,8 @@ C License for more details.
 C 
 C You should have received a copy of the GNU Lesser General Public License
 C along with the nettle library; see the file COPYING.LIB.  If not, write to
-C the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
-C MA 02111-1307, USA.
+C the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+C MA 02111-1301, USA.
 
 C Register usage
 define(<SA>,<%eax>)
@@ -160,7 +160,7 @@ PROLOGUE(_nettle_sha1_compress)
 
 	C Loop-mixed to 520 cycles (for the complete function call) on
 	C AMD K7.
-ALIGN(5)
+ALIGN(32)
 	mov	88(%esp), T2
 	mov	OFFSET(2)(T2), %ecx
 	mov	OFFSET(0)(T2), %eax
