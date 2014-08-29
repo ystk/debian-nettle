@@ -5,7 +5,7 @@
 
 /* nettle, low-level cryptographics library
  *
- * Copyright (C) 2010 Niels Möller
+ * Copyright (C) 2010 Niels MÃ¶ller
  *  
  * The nettle library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,8 +19,8 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 #if HAVE_CONFIG_H
@@ -260,7 +260,7 @@ miller_rabin_pocklington(mpz_t n, mpz_t nm1, mpz_t nm1dq, mpz_t a)
 void
 _nettle_generate_pocklington_prime (mpz_t p, mpz_t r,
 				    unsigned bits, int top_bits_set, 
-				    void *ctx, nettle_random_func random, 
+				    void *ctx, nettle_random_func *random, 
 				    const mpz_t p0,
 				    const mpz_t q,
 				    const mpz_t p0q)
@@ -345,8 +345,8 @@ _nettle_generate_pocklington_prime (mpz_t p, mpz_t r,
    the variant in fips186-3). */
 void
 nettle_random_prime(mpz_t p, unsigned bits, int top_bits_set,
-		    void *random_ctx, nettle_random_func random,
-		    void *progress_ctx, nettle_progress_func progress)
+		    void *random_ctx, nettle_random_func *random,
+		    void *progress_ctx, nettle_progress_func *progress)
 {
   assert (bits >= 3);
   if (bits <= 10)

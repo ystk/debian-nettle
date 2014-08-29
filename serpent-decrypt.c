@@ -8,7 +8,7 @@
 
 /* nettle, low-level cryptographics library
  *
- * Copyright (C) 2011  Niels Möller
+ * Copyright (C) 2011  Niels MÃ¶ller
  * Copyright (C) 2010, 2011  Simon Josefsson
  * Copyright (C) 2003, 2004, 2005 Free Software Foundation, Inc.
  *  
@@ -24,8 +24,8 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 /* This file is derived from cipher/serpent.c in Libgcrypt v1.4.6.
@@ -412,16 +412,16 @@
 /* In-place inverse linear transformation.  */
 #define LINEAR_TRANSFORMATION_INVERSE(x0,x1,x2,x3)	 \
   do {                                                   \
-    x2 = ROL32 (x2, 10);                    \
-    x0 = ROL32 (x0, 27);                    \
+    x2 = ROTL32 (10, x2);                    \
+    x0 = ROTL32 (27, x0);                    \
     x2 = x2 ^ x3 ^ (x1 << 7); \
     x0 = x0 ^ x1 ^ x3;        \
-    x3 = ROL32 (x3, 25);                     \
-    x1 = ROL32 (x1, 31);                     \
+    x3 = ROTL32 (25, x3);                     \
+    x1 = ROTL32 (31, x1);                     \
     x3 = x3 ^ x2 ^ (x0 << 3); \
     x1 = x1 ^ x0 ^ x2;        \
-    x2 = ROL32 (x2, 29);                     \
-    x0 = ROL32 (x0, 19);                    \
+    x2 = ROTL32 (29, x2);                     \
+    x0 = ROTL32 (19, x0);                    \
   } while (0)
 
 /* Round inputs are x0,x1,x2,x3 (destroyed), and round outputs are
@@ -438,16 +438,16 @@
 /* In-place inverse linear transformation.  */
 #define LINEAR_TRANSFORMATION64_INVERSE(x0,x1,x2,x3)	 \
   do {                                                   \
-    x2 = ROL64 (x2, 10);                    \
-    x0 = ROL64 (x0, 27);                    \
-    x2 = x2 ^ x3 ^ RSHIFT64(x1, 7); \
+    x2 = DROTL32 (10, x2);                    \
+    x0 = DROTL32 (27, x0);                    \
+    x2 = x2 ^ x3 ^ DRSHIFT32(7, x1); \
     x0 = x0 ^ x1 ^ x3;        \
-    x3 = ROL64 (x3, 25);                     \
-    x1 = ROL64 (x1, 31);                     \
-    x3 = x3 ^ x2 ^ RSHIFT64(x0, 3); \
+    x3 = DROTL32 (25, x3);                     \
+    x1 = DROTL32 (31, x1);                     \
+    x3 = x3 ^ x2 ^ DRSHIFT32(3, x0); \
     x1 = x1 ^ x0 ^ x2;        \
-    x2 = ROL64 (x2, 29);                     \
-    x0 = ROL64 (x0, 19);                    \
+    x2 = DROTL32 (29, x2);                     \
+    x0 = DROTL32 (19, x0);                    \
   } while (0)
 
 #define ROUND64_INVERSE(which, subkey, x0,x1,x2,x3, y0,y1,y2,y3) \

@@ -1,6 +1,6 @@
 C nettle, low-level cryptographics library
 C 
-C Copyright (C) 2004, 2008 Niels Möller
+C Copyright (C) 2004, 2008 Niels MÃ¶ller
 C  
 C The nettle library is free software; you can redistribute it and/or modify
 C it under the terms of the GNU Lesser General Public License as published by
@@ -14,8 +14,8 @@ C License for more details.
 C 
 C You should have received a copy of the GNU Lesser General Public License
 C along with the nettle library; see the file COPYING.LIB.  If not, write to
-C the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
-C MA 02111-1307, USA.
+C the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+C MA 02111-1301, USA.
 
 C Register usage. KVALUE and INPUT share a register.
 define(<SA>,<%eax>)dnl
@@ -123,9 +123,10 @@ C adding, and then rotating back.
 	C _nettle_sha1_compress(uint32_t *state, uint8_t *input)
 	
 	.text
-	ALIGN(4)
+	ALIGN(16)
 PROLOGUE(_nettle_sha1_compress)
 	C save all registers that need to be saved
+	W64_ENTRY(2, 0)
 	
 	sub	$68, %rsp	C  %rsp = W
 
@@ -250,5 +251,6 @@ PROLOGUE(_nettle_sha1_compress)
 	addl	SE, 16(STATE)
 
 	add	$68, %rsp
+	W64_EXIT(2, 0)
 	ret
 EPILOGUE(_nettle_sha1_compress)

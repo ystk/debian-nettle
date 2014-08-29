@@ -11,7 +11,7 @@
 
 /* nettle, low-level cryptographics library
  *
- * Copyright (C) 2001 Niels Möller
+ * Copyright (C) 2001 Niels MÃ¶ller
  *  
  * The nettle library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -25,8 +25,8 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 #if HAVE_CONFIG_H
@@ -50,22 +50,22 @@
 #define U8c(x) ( (uint8_t) ((x>>8)&0xff) )
 #define U8d(x) ( (uint8_t) ((x)&0xff) )
 
-/* Circular left shift */
-#define ROL(x, n) ( ((x)<<(n)) | ((x)>>(32-(n))) )
-
 /* CAST-128 uses three different round functions */
-#define F1(l, r, i) \
-	t = ROL(ctx->keys[i] + r, ctx->keys[i+16]); \
-	l ^= ((cast_sbox1[U8a(t)] ^ cast_sbox2[U8b(t)]) \
-	 - cast_sbox3[U8c(t)]) + cast_sbox4[U8d(t)];
-#define F2(l, r, i) \
-	t = ROL(ctx->keys[i] ^ r, ctx->keys[i+16]); \
-	l ^= ((cast_sbox1[U8a(t)] - cast_sbox2[U8b(t)]) \
-	 + cast_sbox3[U8c(t)]) ^ cast_sbox4[U8d(t)];
-#define F3(l, r, i) \
-	t = ROL(ctx->keys[i] - r, ctx->keys[i+16]); \
-	l ^= ((cast_sbox1[U8a(t)] + cast_sbox2[U8b(t)]) \
-	 ^ cast_sbox3[U8c(t)]) - cast_sbox4[U8d(t)];
+#define F1(l, r, i) do {				\
+    t = ROTL32(ctx->keys[i+16], ctx->keys[i] + r);	\
+    l ^= ((cast_sbox1[U8a(t)] ^ cast_sbox2[U8b(t)])	\
+	  - cast_sbox3[U8c(t)]) + cast_sbox4[U8d(t)];	\
+  } while (0)
+#define F2(l, r, i) do {				\
+    t = ROTL32( ctx->keys[i+16], ctx->keys[i] ^ r);	\
+    l ^= ((cast_sbox1[U8a(t)] - cast_sbox2[U8b(t)])	\
+	  + cast_sbox3[U8c(t)]) ^ cast_sbox4[U8d(t)];	\
+  } while (0)
+#define F3(l, r, i) do { \
+    t = ROTL32(ctx->keys[i+16], ctx->keys[i] - r);	\
+    l ^= ((cast_sbox1[U8a(t)] + cast_sbox2[U8b(t)])	\
+	  ^ cast_sbox3[U8c(t)]) - cast_sbox4[U8d(t)];	\
+  } while (0)
 
 
 /***** Encryption Function *****/
@@ -179,7 +179,7 @@ cast128_set_key(struct cast128_ctx *ctx,
     if ((i*4+3) < keybytes) x[i] |= (uint32_t)rawkey[i*4+3];
   }
   /* FIXME: For the shorter key sizes, the last 4 subkeys are not
-     used, and need not be generatedd, nor stored. */
+     used, and need not be generated, nor stored. */
   /* Generate 32 subkeys, four at a time */
   for (i = 0; i < 32; i+=4) {
     switch (i & 4) {

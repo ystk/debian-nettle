@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Magnus Holmgren <holmgren@debian.org>
 Build-Depends: dpkg-dev (>= 1.15.7), debhelper (>= 8.1.3),
  libgmp10-dev, m4, autotools-dev (>= 20100122.1)
-Standards-Version: 3.9.3
+Standards-Version: 3.9.5
 Vcs-Svn: svn://svn.kibibyte.se/nettle/trunk
 Vcs-Browser: http://svn.kibibyte.se/nettle
 Homepage: http://www.lysator.liu.se/~nisse/nettle/
@@ -17,7 +17,7 @@ Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: low level cryptographic library (symmetric and one-way cryptos)
  Nettle is a cryptographic library that is designed to fit easily in more or
  less any context: In crypto toolkits for object-oriented languages (C++,
- Python, Pike, ...), in applications like LSH or GnuPG, or even in kernel
+ Python, Pike, ...), in applications like LSH or GNUPG, or even in kernel
  space.
  .
  It tries to solve a problem of providing a common set of cryptographic 
@@ -39,7 +39,7 @@ Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: low level cryptographic library (public-key cryptos)
  Nettle is a cryptographic library that is designed to fit easily in more or
  less any context: In crypto toolkits for object-oriented languages (C++,
- Python, Pike, ...), in applications like LSH or GnuPG, or even in kernel
+ Python, Pike, ...), in applications like LSH or GNUPG, or even in kernel
  space.
  .
  It tries to solve a problem of providing a common set of cryptographic 
@@ -49,7 +49,7 @@ Description: low level cryptographic library (public-key cryptos)
  cryptographic algorithms for the application to use in any environment and
  in any way it needs.
  .
- This package contains the asymmetric cryptographic algorithms, which
+ This package contains the asymmetric cryptographic algorithms, which,
  require the GNU multiple precision arithmetic library (libgmp) for
  their large integer computations.
 
@@ -63,7 +63,7 @@ Conflicts: libnettle-dev
 Description: low level cryptographic library (development files)
  Nettle is a cryptographic library that is designed to fit easily in more or
  less any context: In crypto toolkits for object-oriented languages (C++,
- Python, Pike, ...), in applications like LSH or GnuPG, or even in kernel
+ Python, Pike, ...), in applications like LSH or GNUPG, or even in kernel
  space.
  .
  It tries to solve a problem of providing a common set of cryptographic 
@@ -85,7 +85,7 @@ Suggests: lsh-doc
 Description: low level cryptographic library (binary tools)
  Nettle is a cryptographic library that is designed to fit easily in more or
  less any context: In crypto toolkits for object-oriented languages (C++,
- Python, Pike, ...), in applications like LSH or GnuPG, or even in kernel
+ Python, Pike, ...), in applications like LSH or GNUPG, or even in kernel
  space.
  .
  It tries to solve a problem of providing a common set of cryptographic 
@@ -112,7 +112,7 @@ Depends: libnettle4 (= ${binary:Version}) | libhogweed2 (= ${binary:Version}) | 
 Description: low level cryptographic library (debugging symbols)
  Nettle is a cryptographic library that is designed to fit easily in more or
  less any context: In crypto toolkits for object-oriented languages (C++,
- Python, Pike, ...), in applications like LSH or GnuPG, or even in kernel
+ Python, Pike, ...), in applications like LSH or GNUPG, or even in kernel
  space.
  .
  This package contains the debugging symbols for all binary packages.

@@ -24,8 +24,8 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 /* This file is derived from cipher/serpent.c in Libgcrypt v1.4.6.
@@ -386,16 +386,16 @@
 /* In-place linear transformation.  */
 #define LINEAR_TRANSFORMATION(x0,x1,x2,x3)		 \
   do {                                                   \
-    x0 = ROL32 (x0, 13);                    \
-    x2 = ROL32 (x2, 3);                     \
+    x0 = ROTL32 (13, x0);                    \
+    x2 = ROTL32 (3, x2);                     \
     x1 = x1 ^ x0 ^ x2;        \
     x3 = x3 ^ x2 ^ (x0 << 3); \
-    x1 = ROL32 (x1, 1);                     \
-    x3 = ROL32 (x3, 7);                     \
+    x1 = ROTL32 (1, x1);                     \
+    x3 = ROTL32 (7, x3);                     \
     x0 = x0 ^ x1 ^ x3;        \
     x2 = x2 ^ x3 ^ (x1 << 7); \
-    x0 = ROL32 (x0, 5);                     \
-    x2 = ROL32 (x2, 22);                    \
+    x0 = ROTL32 (5, x0);                     \
+    x2 = ROTL32 (22, x2);                    \
   } while (0)
 
 /* Round inputs are x0,x1,x2,x3 (destroyed), and round outputs are
@@ -411,16 +411,16 @@
 
 #define LINEAR_TRANSFORMATION64(x0,x1,x2,x3)		 \
   do {                                                   \
-    x0 = ROL64 (x0, 13);                    \
-    x2 = ROL64 (x2, 3);                     \
+    x0 = DROTL32 (13, x0);                    \
+    x2 = DROTL32 (3, x2);                     \
     x1 = x1 ^ x0 ^ x2;        \
-    x3 = x3 ^ x2 ^ RSHIFT64(x0, 3);	    \
-    x1 = ROL64 (x1, 1);                     \
-    x3 = ROL64 (x3, 7);                     \
+    x3 = x3 ^ x2 ^ DRSHIFT32(3, x0);	    \
+    x1 = DROTL32 (1, x1);                     \
+    x3 = DROTL32 (7, x3);                     \
     x0 = x0 ^ x1 ^ x3;        \
-    x2 = x2 ^ x3 ^ RSHIFT64(x1, 7);	    \
-    x0 = ROL64 (x0, 5);                     \
-    x2 = ROL64 (x2, 22);                    \
+    x2 = x2 ^ x3 ^ DRSHIFT32(7, x1);	    \
+    x0 = DROTL32 (5, x0);                     \
+    x2 = DROTL32 (22, x2);                    \
   } while (0)
 
 #define ROUND64(which, subkey, x0,x1,x2,x3, y0,y1,y2,y3) \

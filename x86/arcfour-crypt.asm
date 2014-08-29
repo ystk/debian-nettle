@@ -1,6 +1,6 @@
 C nettle, low-level cryptographics library
 C 
-C Copyright (C) 2004, Niels Möller
+C Copyright (C) 2004, Niels MÃ¶ller
 C  
 C The nettle library is free software; you can redistribute it and/or modify
 C it under the terms of the GNU Lesser General Public License as published by
@@ -14,8 +14,8 @@ C License for more details.
 C 
 C You should have received a copy of the GNU Lesser General Public License
 C along with the nettle library; see the file COPYING.LIB.  If not, write to
-C the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
-C MA 02111-1307, USA.
+C the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+C MA 02111-1301, USA.
 
 	.file "arcfour-crypt.asm"
 
@@ -23,7 +23,7 @@ C MA 02111-1307, USA.
 	C               unsigned length, uint8_t *dst,
 	C               const uint8_t *src)
 	.text
-	ALIGN(4)
+	ALIGN(16)
 PROLOGUE(nettle_arcfour_crypt)
 	C save all registers that need to be saved
 	pushl	%ebx		C  12(%esp)
@@ -63,7 +63,7 @@ C Register usage:
 	sarl	$1, %edx
 	jc	.Lloop_odd
 	
-	ALIGN(4)
+	ALIGN(16)
 .Lloop:
 	movb	(%ebp, %eax), %cl	C  si.
 	addb    %cl, %bl

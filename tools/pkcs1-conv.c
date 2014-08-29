@@ -4,7 +4,7 @@
 
 /* nettle, low-level cryptographics library
  *
- * Copyright (C) 2005, 2009 Niels Möller, Magnus Holmgren
+ * Copyright (C) 2005, 2009 Niels MÃ¶ller, Magnus Holmgren
  *  
  * The nettle library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -18,8 +18,8 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 #if HAVE_CONFIG_H
@@ -415,6 +415,7 @@ convert_public_key(struct nettle_buffer *buffer, unsigned length, const uint8_t 
 		      nettle_buffer_reset(buffer);
 		      res = dsa_keypair_to_sexp(buffer, NULL, &pub, NULL) > 0;
 		    }
+		  dsa_public_key_clear(&pub);
 		}
 	      if (!res)
 		werror("SubjectPublicKeyInfo: Invalid DSA key.\n");
@@ -438,6 +439,7 @@ convert_public_key(struct nettle_buffer *buffer, unsigned length, const uint8_t 
 		      nettle_buffer_reset(buffer);
 		      res = rsa_keypair_to_sexp(buffer, NULL, &pub, NULL) > 0;
 		    }
+		  rsa_public_key_clear(&pub);
 		}
 	      if (!res)
 		werror("SubjectPublicKeyInfo: Invalid RSA key.\n");
@@ -448,7 +450,7 @@ convert_public_key(struct nettle_buffer *buffer, unsigned length, const uint8_t 
     }
   else
     werror("SubjectPublicKeyInfo: Invalid object.\n");
-  
+
   return res;
 }
 
@@ -656,5 +658,7 @@ main(int argc, char **argv)
 	  fclose(f);
 	}
     }
+  nettle_buffer_clear (&buffer);
+
   return EXIT_SUCCESS;
 }

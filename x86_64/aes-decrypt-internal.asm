@@ -1,6 +1,6 @@
 C nettle, low-level cryptographics library
 C 
-C Copyright (C) 2001, 2002, 2005, 2008 Rafael R. Sevilla, Niels Möller
+C Copyright (C) 2001, 2002, 2005, 2008 Rafael R. Sevilla, Niels MÃ¶ller
 C  
 C The nettle library is free software; you can redistribute it and/or modify
 C it under the terms of the GNU Lesser General Public License as published by
@@ -14,8 +14,8 @@ C License for more details.
 C 
 C You should have received a copy of the GNU Lesser General Public License
 C along with the nettle library; see the file COPYING.LIB.  If not, write to
-C the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
-C MA 02111-1307, USA.
+C the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+C MA 02111-1301, USA.
 
 include_src(<x86_64/aes.m4>)
 
@@ -53,8 +53,9 @@ define(<TMP>,<%rbp>)
 	C	       unsigned length, uint8_t *dst,
 	C	       uint8_t *src)
 	.text
-	ALIGN(4)
+	ALIGN(16)
 PROLOGUE(_nettle_aes_decrypt)
+	W64_ENTRY(5, 0)
 	test	PARAM_LENGTH, PARAM_LENGTH
 	jz	.Lend
 
@@ -80,7 +81,7 @@ PROLOGUE(_nettle_aes_decrypt)
 	subl	$1, COUNT
 
 	add	$16,KEY		C  point to next key
-	ALIGN(4)
+	ALIGN(16)
 .Lround_loop:
 	AES_ROUND(TABLE, SA,SD,SC,SB, TA, TMP)
 	AES_ROUND(TABLE, SB,SA,SD,SC, TB, TMP)
@@ -129,5 +130,6 @@ PROLOGUE(_nettle_aes_decrypt)
 	pop	%rbp
 	pop	%rbx
 .Lend:
+	W64_EXIT(5, 0)
 	ret
 EPILOGUE(_nettle_aes_decrypt)

@@ -5,7 +5,7 @@
 
 /* nettle, low-level cryptographics library
  *
- * Copyright (C) 2010 Niels Möller
+ * Copyright (C) 2010 Niels MÃ¶ller
  *  
  * The nettle library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,8 +19,8 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 #if HAVE_CONFIG_H
@@ -32,7 +32,7 @@
 int
 dsa_sha256_sign_digest(const struct dsa_public_key *pub,
 		       const struct dsa_private_key *key,
-		       void *random_ctx, nettle_random_func random,
+		       void *random_ctx, nettle_random_func *random,
 		       const uint8_t *digest,
 		       struct dsa_signature *signature)
 {
@@ -43,7 +43,7 @@ dsa_sha256_sign_digest(const struct dsa_public_key *pub,
 int
 dsa_sha256_sign(const struct dsa_public_key *pub,
 		const struct dsa_private_key *key,
-		void *random_ctx, nettle_random_func random,
+		void *random_ctx, nettle_random_func *random,
 		struct sha256_ctx *hash,
 		struct dsa_signature *signature)
 {

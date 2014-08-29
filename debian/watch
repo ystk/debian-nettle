@@ -1,3 +1,5 @@
 version=3
-ftp://ftp.lysator.liu.se/pub/security/lsh/nettle-(.*)\.tar\.gz
-http://www.lysator.liu.se/~nisse/archive/nettle-(.*)\.tar\.gz
+opts=uversionmangle=s/(\d)[_\.\-\+]?((RC|rc|pre|dev|beta|alpha|b|a)[\-\.]?\d*)$/$1~$2/ \
+ftp://ftp.lysator.liu.se/pub/security/lsh/nettle-(\d.*)\.(?:tgz|tbz2|txz|tar\.(?:gz|bz2|xz))
+opts=uversionmangle=s/(\d)[_\.\-\+]?((RC|rc|pre|dev|beta|alpha|b|a)[\-\.]?\d*)$/$1~$2/ \
+http://www.lysator.liu.se/~nisse/archive/nettle-(\d.*)\.(?:tgz|tbz2|txz|tar\.(?:gz|bz2|xz))

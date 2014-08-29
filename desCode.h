@@ -1,6 +1,6 @@
 /* desCode.h
  *
- * $Id: desCode.h,v 1.1 2007-04-05 14:20:35 nisse Exp $ */
+ */
 
 /*	des - fast & portable DES encryption & decryption.
  *	Copyright (C) 1992  Dana L. How

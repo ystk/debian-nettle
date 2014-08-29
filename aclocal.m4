@@ -369,6 +369,11 @@ char *alloca ();
 #else /* defined __GNUC__ */
 # if HAVE_ALLOCA_H
 #  include <alloca.h>
+# else
+/* Needed for alloca on windows, also with gcc */
+#  if HAVE_MALLOC_H
+#   include <malloc.h>
+#  endif
 # endif
 #endif
 ])])
@@ -491,6 +496,149 @@ fi
 rm -f conftest*
 ])
 
+dnl  GMP_PROG_CC_FOR_BUILD
+dnl  ---------------------
+dnl  Establish CC_FOR_BUILD, a C compiler for the build system.
+dnl
+dnl  If CC_FOR_BUILD is set then it's expected to work, likewise the old
+dnl  style HOST_CC, otherwise some likely candidates are tried, the same as
+dnl  configfsf.guess.
+
+AC_DEFUN([GMP_PROG_CC_FOR_BUILD],
+[AC_REQUIRE([AC_PROG_CC])
+if test -n "$CC_FOR_BUILD"; then
+  GMP_PROG_CC_FOR_BUILD_WORKS($CC_FOR_BUILD,,
+    [AC_MSG_ERROR([Specified CC_FOR_BUILD doesn't seem to work])])
+elif test -n "$HOST_CC"; then
+  GMP_PROG_CC_FOR_BUILD_WORKS($HOST_CC,
+    [CC_FOR_BUILD=$HOST_CC],
+    [AC_MSG_ERROR([Specified HOST_CC doesn't seem to work])])
+elif test $cross_compiling = no ; then
+  CC_FOR_BUILD="$CC"
+else
+  for i in cc gcc c89 c99; do
+    GMP_PROG_CC_FOR_BUILD_WORKS($i,
+      [CC_FOR_BUILD=$i
+       break])
+  done
+  if test -z "$CC_FOR_BUILD"; then
+    AC_MSG_ERROR([Cannot find a build system compiler])
+  fi
+fi
+
+AC_ARG_VAR(CC_FOR_BUILD,[build system C compiler])
+AC_SUBST(CC_FOR_BUILD)
+])
+
+
+dnl  GMP_PROG_CC_FOR_BUILD_WORKS(cc/cflags[,[action-if-good][,action-if-bad]])
+dnl  -------------------------------------------------------------------------
+dnl  See if the given cc/cflags works on the build system.
+dnl
+dnl  It seems easiest to just use the default compiler output, rather than
+dnl  figuring out the .exe or whatever at this stage.
+
+AC_DEFUN([GMP_PROG_CC_FOR_BUILD_WORKS],
+[AC_MSG_CHECKING([build system compiler $1])
+# remove anything that might look like compiler output to our "||" expression
+rm -f conftest* a.out b.out a.exe a_out.exe
+cat >conftest.c <<EOF
+int
+main ()
+{
+  exit(0);
+}
+EOF
+gmp_compile="$1 conftest.c"
+cc_for_build_works=no
+if AC_TRY_EVAL(gmp_compile); then
+  if (./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest) >&AC_FD_CC 2>&1; then
+    cc_for_build_works=yes
+  fi
+fi
+rm -f conftest* a.out b.out a.exe a_out.exe
+AC_MSG_RESULT($cc_for_build_works)
+if test "$cc_for_build_works" = yes; then
+  ifelse([$2],,:,[$2])
+else
+  ifelse([$3],,:,[$3])
+fi
+])
+
+dnl  GMP_PROG_EXEEXT_FOR_BUILD
+dnl  -------------------------
+dnl  Determine EXEEXT_FOR_BUILD, the build system executable suffix.
+dnl
+dnl  The idea is to find what "-o conftest$foo" will make it possible to run
+dnl  the program with ./conftest.  On Unix-like systems this is of course
+dnl  nothing, for DOS it's ".exe", or for a strange RISC OS foreign file
+dnl  system cross compile it can be ",ff8" apparently.  Not sure if the
+dnl  latter actually applies to a build-system executable, maybe it doesn't,
+dnl  but it won't hurt to try.
+
+AC_DEFUN([GMP_PROG_EXEEXT_FOR_BUILD],
+[AC_REQUIRE([GMP_PROG_CC_FOR_BUILD])
+AC_CACHE_CHECK([for build system executable suffix],
+               gmp_cv_prog_exeext_for_build,
+[if test $cross_compiling = no ; then
+  gmp_cv_prog_exeext_for_build="$EXEEXT"
+else
+  cat >conftest.c <<EOF
+int
+main ()
+{
+  exit (0);
+}
+EOF
+  for i in .exe ,ff8 ""; do
+    gmp_compile="$CC_FOR_BUILD conftest.c -o conftest$i"
+    if AC_TRY_EVAL(gmp_compile); then
+      if (./conftest) 2>&AC_FD_CC; then
+        gmp_cv_prog_exeext_for_build=$i
+        break
+      fi
+    fi
+  done
+  rm -f conftest*
+  if test "${gmp_cv_prog_exeext_for_build+set}" != set; then
+    AC_MSG_ERROR([Cannot determine executable suffix])
+  fi
+fi
+])
+AC_SUBST(EXEEXT_FOR_BUILD,$gmp_cv_prog_exeext_for_build)
+])
+
+dnl NETTLE_CHECK_ARM_NEON
+dnl ---------------------
+dnl Check if ARM Neon instructions should be used.
+dnl Obeys enable_arm_neon, which should be set earlier.
+AC_DEFUN([NETTLE_CHECK_ARM_NEON],
+[if test "$enable_arm_neon" = auto ; then
+  if test "$cross_compiling" = yes ; then
+    dnl Check if compiler/assembler accepts it,
+    dnl without an explicit .fpu neon directive.
+    AC_CACHE_CHECK([if assembler accepts Neon instructions],
+      nettle_cv_asm_arm_neon,
+      [GMP_TRY_ASSEMBLE([
+.text
+foo:
+	vmlal.u32	q1, d0, d1
+],
+      [nettle_cv_asm_arm_neon=yes],
+      [nettle_cv_asm_arm_neon=no])])
+    enable_arm_neon="$nettle_cv_asm_arm_neon"
+  else
+    AC_MSG_CHECKING([if /proc/cpuinfo claims neon support])
+    if grep '^Features.*:.* neon' /proc/cpuinfo >/dev/null ; then
+      enable_arm_neon=yes
+    else
+      enable_arm_neon=no
+    fi
+    AC_MSG_RESULT($enable_arm_neon)
+  fi
+fi
+])
+
 dnl @synopsis AX_CREATE_STDINT_H [( HEADER-TO-GENERATE [, HEADERS-TO-CHECK])]
 dnl
 dnl the "ISO C9X: 7.18 Integer types <stdint.h>" section requires the
@@ -523,7 +671,6 @@ dnl Remember, if the system already had a valid <stdint.h>, the generated
 dnl file will include it directly. No need for fuzzy HAVE_STDINT_H things...
 dnl
 dnl @, (status: used on new platforms) (see http://ac-archive.sf.net/gstdint/)
-dnl @version $Id: aclocal.m4,v 1.1 2007-05-03 20:49:15 nisse Exp $
 dnl @author  Guido Draheim <guidod@gmx.de> 
 
 AC_DEFUN([AX_CREATE_STDINT_H],

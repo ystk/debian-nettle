@@ -16,8 +16,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 #if HAVE_CONFIG_H
@@ -29,12 +29,6 @@
 #include "ripemd160.h"
 
 #include "macros.h"
-
-/****************
- * Rotate the 32 bit unsigned integer X by N bits left
- */
-
-#define ROL32(x,n) ( ((x) << (n)) | ((x) >> (32-(n))) )
 
 
 /****************
@@ -76,8 +70,8 @@ _nettle_ripemd160_compress(uint32_t *state, const uint8_t *data)
 #define F3(x,y,z)   ( ((x) & (z)) | ((y) & ~(z)) )
 #define F4(x,y,z)   ( (x) ^ ((y) | ~(z)) )
 #define R(a,b,c,d,e,f,k,r,s) do { t = a + f(b,c,d) + k + x[r]; \
-          a = ROL32(t,s) + e;        \
-          c = ROL32(c,10);         \
+          a = ROTL32(s,t) + e;        \
+          c = ROTL32(10,c);         \
         } while(0)
 
   /* left lane */

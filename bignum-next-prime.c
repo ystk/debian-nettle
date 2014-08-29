@@ -4,7 +4,7 @@
 
 /* nettle, low-level cryptographics library
  *
- * Copyright (C) 2002 Niels Möller
+ * Copyright (C) 2002 Niels MÃ¶ller
  *  
  * The nettle library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -18,8 +18,8 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 #if HAVE_CONFIG_H
@@ -74,7 +74,7 @@ static const uint16_t primes[] = {
 /* NOTE: The mpz_nextprime in current GMP is unoptimized. */
 void
 nettle_next_prime(mpz_t p, mpz_t n, unsigned count, unsigned prime_limit,
-		  void *progress_ctx, nettle_progress_func progress)
+		  void *progress_ctx, nettle_progress_func *progress)
 {
   mpz_t tmp;
   TMP_DECL(moduli, unsigned, NUMBER_OF_PRIMES);

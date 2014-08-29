@@ -6,7 +6,7 @@
 
 /* nettle, low-level cryptographics library
  *
- * Copyright (C) 2002 Niels Möller
+ * Copyright (C) 2002 Niels MÃ¶ller
  *  
  * The nettle library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -20,8 +20,8 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 #ifndef NETTLE_INTERNAL_H_INCLUDED
@@ -36,15 +36,16 @@
 
 #if HAVE_ALLOCA
 # define TMP_DECL(name, type, max) type *name
-# define TMP_ALLOC(name, size) (name = alloca(sizeof (*name) * size))
+# define TMP_ALLOC(name, size) (name = alloca(sizeof (*name) * (size)))
 #else /* !HAVE_ALLOCA */
 # define TMP_DECL(name, type, max) type name[max]
 # define TMP_ALLOC(name, size) \
-do { if (size > (sizeof(name) / sizeof(name[0]))) abort(); } while (0)
+  do { if ((size) > (sizeof(name) / sizeof(name[0]))) abort(); } while (0)
 #endif 
 
 /* Arbitrary limits which apply to systems that don't have alloca */
 #define NETTLE_MAX_BIGNUM_BITS 10000
+#define NETTLE_MAX_BIGNUM_SIZE ((NETTLE_MAX_BIGNUM_BITS + 7)/8)
 #define NETTLE_MAX_HASH_BLOCK_SIZE 128
 #define NETTLE_MAX_HASH_DIGEST_SIZE 64
 #define NETTLE_MAX_SEXP_ASSOC 17
@@ -59,9 +60,11 @@ extern const struct nettle_cipher nettle_des3;
 
 extern const struct nettle_cipher nettle_blowfish128;
 
-/* Glue to openssl, for comparative benchmarking. The corresponding
- * code is not included in the nettle library, as that would make the
- * shared library depend on openssl. Instead, look at
+/* For benchmarking only, sets no iv and lies about the block size. */
+extern const struct nettle_cipher nettle_salsa20;
+extern const struct nettle_cipher nettle_salsa20r12;
+
+/* Glue to openssl, for comparative benchmarking. Code in
  * examples/nettle-openssl.c. */
 extern const struct nettle_cipher nettle_openssl_aes128;
 extern const struct nettle_cipher nettle_openssl_aes192;

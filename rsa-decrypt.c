@@ -1,11 +1,11 @@
-/* rsa_decrypt.c
+/* rsa-decrypt.c
  *
  * The RSA publickey algorithm. PKCS#1 encryption.
  */
 
 /* nettle, low-level cryptographics library
  *
- * Copyright (C) 2001 Niels Möller
+ * Copyright (C) 2001, 2012 Niels MÃ¶ller
  *  
  * The nettle library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,62 +19,30 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 #if HAVE_CONFIG_H
 # include "config.h"
 #endif
 
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "rsa.h"
 
-#include "bignum.h"
-#include "nettle-internal.h"
+#include "pkcs1.h"
 
 int
 rsa_decrypt(const struct rsa_private_key *key,
 	    unsigned *length, uint8_t *message,
 	    const mpz_t gibberish)
 {
-  TMP_DECL(em, uint8_t, NETTLE_MAX_BIGNUM_BITS / 8);
-  uint8_t *terminator;
-  unsigned padding;
-  unsigned message_length;
-  
   mpz_t m;
+  int res;
 
   mpz_init(m);
   rsa_compute_root(key, m, gibberish);
 
-  TMP_ALLOC(em, key->size);
-  nettle_mpz_get_str_256(key->size, em, m);
+  res = pkcs1_decrypt (key->size, m, length, message);
   mpz_clear(m);
-
-  /* Check format */
-  if (em[0] || em[1] != 2)
-    return 0;
-
-  terminator = memchr(em + 2, 0, key->size - 2);
-
-  if (!terminator)
-    return 0;
-  
-  padding = terminator - (em + 2);
-  if (padding < 8)
-    return 0;
-
-  message_length = key->size - 3 - padding;
-
-  if (*length < message_length)
-    return 0;
-  
-  memcpy(message, terminator + 1, message_length);
-  *length = message_length;
-
-  return 1;
+  return res;
 }

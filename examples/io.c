@@ -5,7 +5,7 @@
 
 /* nettle, low-level cryptographics library
  *
- * Copyright (C) 2002 Niels Möller
+ * Copyright (C) 2002 Niels MÃ¶ller
  *  
  * The nettle library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,8 +19,8 @@
  * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02111-1301, USA.
  */
 
 #if HAVE_CONFIG_H
@@ -71,8 +71,7 @@ werror(const char *format, ...)
 unsigned
 read_file(const char *name, unsigned max_size, char **contents)
 {
-  unsigned size;
-  unsigned done;
+  unsigned size, done;
   char *buffer;
   FILE *f;
     
@@ -82,21 +81,10 @@ read_file(const char *name, unsigned max_size, char **contents)
       werror("Opening `%s' failed: %s\n", name, strerror(errno));
       return 0;
     }
-  buffer = NULL;
 
-  if (max_size && max_size < 100)
-    size = max_size;
-  else
-    size = 100;
+  size = 100;
 
-  /* FIXME: The use of feof and ferror in this loop is a bit confused
-     (but I think it is still correct). We should check the return
-     value of fread, and call feof and/or ferror when we get a short
-     item count. */	
-
-  for (done = 0;
-       (!max_size || done < max_size) && !feof(f);
-       size *= 2)
+  for (buffer = NULL, done = 0;; size *= 2)
     {
       char *p;
 
@@ -118,8 +106,25 @@ read_file(const char *name, unsigned max_size, char **contents)
       buffer = p;
       done += fread(buffer + done, 1, size - done, f);
 
-      if (ferror(f))
-	goto fail;
+      if (done < size)
+	{
+	  /* Short count means EOF or read error */
+	  if (ferror(f))
+	    {
+	      fprintf (stderr, "Reading `%s' failed: %s\n",
+		       name, strerror(errno));
+
+	      goto fail;
+	    }
+	  if (done == 0)
+	    /* Treat empty file as error */
+	    goto fail;
+
+	  break;
+	}
+
+      if (size == max_size)
+	break;
     }
   
   fclose(f);
@@ -132,28 +137,24 @@ read_file(const char *name, unsigned max_size, char **contents)
 }
 
 int
-write_file(const char *name, unsigned size, const char *buffer)
-{
-  FILE *f = fopen(name, "wb");
-  unsigned res;
-  
-  if (!f)
-    return 0;
-
-  res = fwrite(buffer, 1, size, f);
-  
-  if (res < size)
-    res = 0;
-
-  return fclose(f) == 0 && res > 0;
-}
-
-int
 write_string(FILE *f, unsigned size, const char *buffer)
 {
   size_t res = fwrite(buffer, 1, size, f);
 
   return res == size;
+}
+
+int
+write_file(const char *name, unsigned size, const char *buffer)
+{
+  FILE *f = fopen(name, "wb");
+  int res;
+  
+  if (!f)
+    return 0;
+
+  res = write_string(f, size, buffer);
+  return fclose(f) == 0 && res;
 }
 
 int
