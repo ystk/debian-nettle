@@ -1,3 +1,21 @@
+nettle (2.7.1-5) unstable; urgency=medium
+
+  * Add code to transition /usr/share/doc/nettle-dbg from directory to
+    symlink (Closes: #774919).
+  * Also add missing Pre-Depends: multiarch-support to nettle-dbg.
+
+ -- Magnus Holmgren <holmgren@debian.org>  Sun, 11 Jan 2015 20:27:20 +0100
+
+nettle (2.7.1-4) unstable; urgency=medium
+
+  * Use dh_installdocs --link-doc to create symlinks and add correct
+    dependencies (Closes: #773022).
+  * Bump Standards-Version to 3.9.6.
+  * Add upstream PGP signing key.
+  * Add GNU server URLs to watch file.
+
+ -- Magnus Holmgren <holmgren@debian.org>  Sun, 21 Dec 2014 01:14:02 +0100
+
 nettle (2.7.1-3) unstable; urgency=low
 
   * Use -fPIC instead of -fpic by default (Closes: #755769); needed on

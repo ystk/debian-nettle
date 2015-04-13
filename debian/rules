@@ -77,9 +77,9 @@ binary-arch: build-arch install
 	dh_testdir
 	dh_testroot
 	dh_install -a --sourcedir=debian/tmp
-	dh_link -a
+	dh_installdocs -a -Nnettle-dev --link-doc=libnettle4
+	dh_installdocs -a -pnettle-dev
 	dh_installchangelogs -a ChangeLog
-	dh_installdocs -a
 	dh_installexamples -a
 	dh_installinfo -a
 	dh_installman -a
