@@ -1,3 +1,9 @@
+nettle (2.7.1-5+deb8u1) stable; urgency=low
+
+  * Fix CVE-2015-8803, CVE-2015-8804, and CVE-2015-8805 (Closes: #813679).
+
+ -- Magnus Holmgren <holmgren@debian.org>  Sat, 06 Feb 2016 20:01:37 +0100
+
 nettle (2.7.1-5) unstable; urgency=medium
 
   * Add code to transition /usr/share/doc/nettle-dbg from directory to
