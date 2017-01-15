@@ -1,8 +1,17 @@
+nettle (2.7.1-5+deb8u2) stable; urgency=medium
+
+  * [SECURITY] cve-2016-6489.patch: Protect against potential side-channel
+    attacks against exponentiation operations as described in
+    CVE-2016-6489 "RSA code is vulnerable to cache sharing related
+    attacks" (Closes: #832983).
+
+ -- Magnus Holmgren <holmgren@debian.org>  Sat, 05 Nov 2016 17:37:13 +0100
+
 nettle (2.7.1-5+deb8u1) stable; urgency=low
 
   * Fix CVE-2015-8803, CVE-2015-8804, and CVE-2015-8805 (Closes: #813679).
 
- -- Magnus Holmgren <holmgren@debian.org>  Sat, 06 Feb 2016 20:01:37 +0100
+ -- Magnus Holmgren <holmgren@debian.org>  Tue, 09 Feb 2016 20:57:42 +0100
 
 nettle (2.7.1-5) unstable; urgency=medium
 
