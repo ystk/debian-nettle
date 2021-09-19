@@ -2,3 +2,5 @@ fPIC.patch
 cve-2015-8803_8805.patch
 cve-2015-8804.patch
 cve-2016-6489.patch
+CVE-2021-3580.patch
+CVE-2021-20305.patch
